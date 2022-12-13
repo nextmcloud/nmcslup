@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions 
+		xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+		xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+		xmlns:soapbind="http://schemas.xmlsoap.org/wsdl/soap/"
+		xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+	  	xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"
+		xmlns:tns="http://slup2soap.idm.telekom.com/slupClient/" 
+		name="slupClient"
+		targetNamespace="http://slup2soap.idm.telekom.com/slupClient/">
+	<wsdl:types>	
+<!-- complex types -->
+		<xsd:schema targetNamespace="http://slup2soap.idm.telekom.com/slupClient/">
+			<xsd:complexType name="tdbValue">
+				<xsd:sequence>
+    				<xsd:element name="name" type="xsd:string" minOccurs="0" maxOccurs="1" nillable="true"/>
+    				<xsd:element name="val" type="xsd:string" minOccurs="0" maxOccurs="1" nillable="true"/>					
+				</xsd:sequence>
+			</xsd:complexType>
+			<xsd:complexType name="SLUPConnect_RequestParameters">
+				<!-- wsdl2java from Axis 1.4 does NOT work with annotations
+		    	<xsd:annotation>
+		    		<xsd:documentation>
+	      				The token that has been returned in response to StartSLUP 
+	      				will be presented here. This enables the external receiver 
+	      				to correlate his request with the slup2soap session.			    			
+		    		</xsd:documentation>
+		    	</xsd:annotation>
+		    	 -->
+			  	<xsd:sequence>
+			    	<xsd:element name="token" type="xsd:unsignedLong" minOccurs="1" maxOccurs="1" nillable="false"/>
+			  	</xsd:sequence>
+			</xsd:complexType>
+			<xsd:complexType name="SLUPConnect_ResponseParameters">
+				<xsd:sequence>
+			    	<xsd:element name="returncode" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false">
+						<!--
+						<xsd:annotation>
+							<xsd:documentation>
+						        With these return codes the external application is able to control slup2soap. 
+						        0x0000	OK
+						        0x0010	data accepted, send next record
+						        0x0011	data not accepted, present previous record
+						        0x0012	data not accepted, quit slup2soap
+						        0x000E	request already processed
+						        0xF003	invalid token
+						        0xF022	SOAP fault
+							</xsd:documentation>
+						</xsd:annotation>  
+						-->
+			    	</xsd:element>
+			    	<xsd:element name="detail" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+			    </xsd:sequence>
+			</xsd:complexType>
+
+			<xsd:complexType name="SLUPDisconnect_RequestParameters">
+				<!--
+		    	<xsd:annotation>
+		    		<xsd:documentation>
+	      				The token that has been returned in response to StartSLUP 
+	      				will be presented here. This enables the external receiver 
+	      				to correlate his request with the slup2soap session.			    			
+		    		</xsd:documentation>
+		    	</xsd:annotation>
+		    	-->
+			  	<xsd:sequence>
+			    	<xsd:element name="token" type="xsd:unsignedLong" minOccurs="1" maxOccurs="1" nillable="false"/>
+			  	</xsd:sequence>
+			</xsd:complexType>
+			<xsd:complexType name="SLUPDisconnect_ResponseParameters">
+				<xsd:sequence>
+			    	<xsd:element name="returncode" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false">
+			    		<!--
+						<xsd:annotation>
+							<xsd:documentation>
+        						The return code is not checked by slup2soap.
+							</xsd:documentation>
+						</xsd:annotation>
+						-->
+			    	</xsd:element>
+			    	<xsd:element name="detail" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+			    </xsd:sequence>
+			</xsd:complexType>
+
+			<xsd:complexType name="SLUP_RequestParameters">
+			  	<xsd:sequence>
+					<xsd:element name="token" type="xsd:unsignedLong" minOccurs="1" maxOccurs="1" nillable="false">
+						<!--
+				    	<xsd:annotation>
+				    		<xsd:documentation>
+			      				The token that has been returned in response to StartSLUP 
+			      				will be presented here. This enables the external receiver 
+			      				to correlate his request with the slup2soap session.			    			
+				    		</xsd:documentation>
+				    	</xsd:annotation>
+				    	-->			    	
+			    	</xsd:element>
+			    	<xsd:element name="request" type="xsd:string"  minOccurs="1" maxOccurs="1" nillable="false">
+			    		<!--
+				    	<xsd:annotation>
+				    		<xsd:documentation>
+								type of the slup-request
+							</xsd:documentation>
+				    	</xsd:annotation>
+				    	-->	
+			    	</xsd:element>
+			    	<xsd:element name="changeTime" type="xsd:dateTime"  minOccurs="1" maxOccurs="1" nillable="false">
+			    		<!--
+				    	<xsd:annotation>
+				    		<xsd:documentation>
+								Time stamp of the transmitted record.
+							</xsd:documentation>
+				    	</xsd:annotation>
+				    	-->			    	
+			    	</xsd:element>
+			    	<xsd:element name="oldfields" type="tns:tdbValue" minOccurs="0" maxOccurs="unbounded" nillable="true">
+			    		<!--
+				    	<xsd:annotation>
+				    		<xsd:documentation>
+        						This array of data fields contain the old values of the records. 
+        						Each array element contains a field name and a field value.
+				    		</xsd:documentation>
+				    	</xsd:annotation>
+				    	-->			    	
+			    	</xsd:element>
+			    	<xsd:element name="newfields" type="tns:tdbValue" minOccurs="0" maxOccurs="unbounded" nillable="true">
+			    		<!--
+				    	<xsd:annotation>
+				    		<xsd:documentation>
+        						This array of data fields contain the new values of the records. 
+        						Each array element contains a field name and a field value.
+				    		</xsd:documentation>
+				    	</xsd:annotation>
+				    	-->			    	
+			    	</xsd:element>
+			    </xsd:sequence>
+			</xsd:complexType>
+			<xsd:complexType name="SLUP_ResponseParameters">
+				<xsd:sequence>
+			    	<xsd:element name="returncode" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false">
+			    		<!-- 
+						<xsd:annotation>
+							<xsd:documentation>
+						        With these return code the external application is able to control slup2soap. 
+						        0x0000	OK
+						        0x0010	data accepted, send next record
+						        0x0011	data not accepted, present previous record
+						        0x0012	data not accepted, quit slup2soap
+						        0x000E	request already processed
+						        0xF003	invalid token
+						        0xF022	SOAP fault
+							</xsd:documentation>
+						</xsd:annotation>
+						 -->
+			    	</xsd:element>
+			    	<xsd:element name="detail" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+			    </xsd:sequence>
+			</xsd:complexType>
+			
+
+<!--  elements -->		
+			<xsd:element name="FaultResponse">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="code"    type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+						<xsd:element name="message" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+
+			<!-- SLUPConnect -->
+			<xsd:element name="SLUPConnect" type="tns:SLUPConnect_RequestParameters"/>
+			<xsd:element name="SLUPConnectResponse" type="tns:SLUPConnect_ResponseParameters"/>
+			<!-- SLUPDisconnect -->
+			<xsd:element name="SLUPDisconnect" type="tns:SLUPDisconnect_RequestParameters"/>
+			<xsd:element name="SLUPDisconnectResponse" type="tns:SLUPDisconnect_ResponseParameters"/>
+			<!-- SLUP -->
+			<xsd:element name="SLUP" type="tns:SLUP_RequestParameters"/>
+			<xsd:element name="SLUPResponse" type="tns:SLUP_ResponseParameters"/>
+		</xsd:schema>
+	</wsdl:types>
+	
+    <wsdl:message name="FaultResponseMsg">
+    	<wsdl:part name="fault"	element="tns:FaultResponse"/>
+    </wsdl:message>    
+
+	<wsdl:message name="SLUPConnect">
+		<wsdl:part name="parameters" element="tns:SLUPConnect"/>
+	</wsdl:message>
+	<wsdl:message name="SLUPConnectResponse">
+		<wsdl:part name="parameters" element="tns:SLUPConnectResponse" />
+	</wsdl:message>
+
+	<wsdl:message name="SLUPDisconnect">
+		<wsdl:part name="parameters" element="tns:SLUPDisconnect"/>
+	</wsdl:message>
+	<wsdl:message name="SLUPDisconnectResponse">
+		<wsdl:part name="parameters" element="tns:SLUPDisconnectResponse" />
+	</wsdl:message>
+	
+	<wsdl:message name="SLUP">
+		<wsdl:part name="parameters" element="tns:SLUP"/>
+	</wsdl:message>
+	<wsdl:message name="SLUPResponse">
+		<wsdl:part name="parameters" element="tns:SLUPResponse" />
+	</wsdl:message>
+	
+	<wsdl:portType name="slupClientPortType">
+		<wsdl:operation name="SLUPConnect">
+			<wsdl:input message="tns:SLUPConnect"/>
+			<wsdl:output message="tns:SLUPConnectResponse"/>
+            <wsdl:fault name="fault" message="tns:FaultResponseMsg"/>
+		</wsdl:operation>
+		<wsdl:operation name="SLUPDisconnect">
+			<wsdl:input message="tns:SLUPDisconnect"/>
+			<wsdl:output message="tns:SLUPDisconnectResponse"/>
+            <wsdl:fault name="fault" message="tns:FaultResponseMsg"/>
+		</wsdl:operation>
+		<wsdl:operation name="SLUP">
+			<wsdl:input message="tns:SLUP"/>
+			<wsdl:output message="tns:SLUPResponse"/>
+            <wsdl:fault name="fault" message="tns:FaultResponseMsg"/>
+		</wsdl:operation>
+	</wsdl:portType>
+
+	<wsdl:binding name="slupClientBinding" type="tns:slupClientPortType">
+		<soapbind:binding style="document" transport="http://schemas.xmlsoap.org/soap/http" />
+		<wsdl:operation name="SLUPConnect">
+			<soapbind:operation soapAction="http://slup2soap.idm.telekom.com/slupClient/SLUPConnect" />
+			<wsdl:input><soapbind:body use="literal" /></wsdl:input>
+			<wsdl:output><soapbind:body use="literal" /></wsdl:output>
+			<wsdl:fault name="fault"><soapbind:fault use="literal" name="fault" /></wsdl:fault>
+		</wsdl:operation>
+		<wsdl:operation name="SLUPDisconnect">
+			<soapbind:operation soapAction="http://slup2soap.idm.telekom.com/slupClient/SLUPDisconnect" />
+			<wsdl:input><soapbind:body use="literal" /></wsdl:input>
+			<wsdl:output><soapbind:body use="literal" /></wsdl:output>
+			<wsdl:fault name="fault"><soapbind:fault use="literal" name="fault" /></wsdl:fault>
+		</wsdl:operation>
+		<wsdl:operation name="SLUP">
+			<soapbind:operation soapAction="http://slup2soap.idm.telekom.com/slupClient/SLUP" />
+			<wsdl:input><soapbind:body use="literal" /></wsdl:input>
+			<wsdl:output><soapbind:body use="literal" /></wsdl:output>
+			<wsdl:fault name="fault"><soapbind:fault use="literal" name="fault" /></wsdl:fault>
+		</wsdl:operation>
+	</wsdl:binding>
+
+<!--  the service definition, location must be adopted to match asp specific environment -->
+	<wsdl:service name="slupClient">
+		<wsdl:port name="slupClient" binding="tns:slupClientBinding">
+			<soapbind:address location="https://dev2.next.magentacloud.de/apps/nmcslup/api/1.0/slup"/>
+		</wsdl:port>
+	</wsdl:service>
+</wsdl:definitions>

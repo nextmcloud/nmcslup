@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions 
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+	xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+	xmlns:soapbind="http://schemas.xmlsoap.org/wsdl/soap/"
+	xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+        xmlns:sp="http://schemas.xmlsoap.org/ws/2005/07/securitypolicy"
+	xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy"
+	xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
+	xmlns:tns="http://slup2soap.idm.telekom.com/slupService/" 
+	name="slupService"
+	targetNamespace="http://slup2soap.idm.telekom.com/slupService/">
+
+	<!--  security policy specifying transport security measures and required soap header security elements -->
+    <wsp:Policy wsu:Id="UTTransportPolicy">
+        <wsp:ExactlyOne>
+            <wsp:All>
+                <sp:TransportBinding>
+                    <wsp:Policy>
+                        <sp:TransportToken>
+                            <wsp:Policy>
+                                <sp:HttpsToken RequireClientCertificate="false"/>
+                            </wsp:Policy>
+                        </sp:TransportToken>
+                        <sp:Layout>
+                            <wsp:Policy>
+                                <sp:Strict/>
+                            </wsp:Policy>
+                        </sp:Layout>
+                        <sp:AlgorithmSuite>
+                            <wsp:Policy>
+                                <sp:Basic256/>
+                            </wsp:Policy>
+                        </sp:AlgorithmSuite>
+                    </wsp:Policy>
+                </sp:TransportBinding>
+                <sp:SignedSupportingTokens>
+                    <wsp:Policy>
+                        <sp:UsernameToken sp:IncludeToken="http://schemas.xmlsoap.org/ws/2005/07/securitypolicy/IncludeToken/AlwaysToRecipient">
+                            <wsp:Policy>
+                                <sp:WssUsernameToken11/>
+                            </wsp:Policy>
+                        </sp:UsernameToken>
+                    </wsp:Policy>
+                </sp:SignedSupportingTokens>
+            </wsp:All>
+        </wsp:ExactlyOne>
+    </wsp:Policy>
+
+	<wsdl:types>
+<!-- complex types -->
+		<xsd:schema targetNamespace="http://slup2soap.idm.telekom.com/slupService/">
+			<xsd:complexType name="startSLUP2_RequestParameters">
+				<xsd:sequence>
+			    	<xsd:element name="slupURL" type="xsd:anyURI" minOccurs="1" maxOccurs="1" nillable="false"/>
+				</xsd:sequence>
+			</xsd:complexType>
+			<xsd:complexType name="startSLUP2_ResponseParameters">
+				<xsd:sequence>
+					<xsd:element name="SLUPreturncode" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+			    	<xsd:element name="detail" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+					<xsd:element name="token" type="xsd:unsignedLong" minOccurs="1" maxOccurs="1" nillable="false"/>
+			    </xsd:sequence>
+			</xsd:complexType>
+
+<!--  elements -->		
+			<xsd:element name="FaultResponse">
+				<xsd:complexType>
+					<xsd:sequence>
+						<xsd:element name="code"    type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+						<xsd:element name="message" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+					</xsd:sequence>
+				</xsd:complexType>
+			</xsd:element>
+
+			<xsd:element name="startSLUP2" type="tns:startSLUP2_RequestParameters"/>
+			<xsd:element name="startSLUP2Response" type="tns:startSLUP2_ResponseParameters"/>
+		</xsd:schema>
+	</wsdl:types>
+	
+    <wsdl:message name="FaultResponseMsg">
+    	<wsdl:part name="fault"	element="tns:FaultResponse"/>
+    </wsdl:message>    
+
+	<wsdl:message name="startSLUP2">
+		<wsdl:part name="parameters" element="tns:startSLUP2"/>
+	</wsdl:message>
+	<wsdl:message name="startSLUP2Response">
+		<wsdl:part name="parameters" element="tns:startSLUP2Response" />
+	</wsdl:message>
+
+	<wsdl:portType name="slupServicePortType">
+		<wsdl:operation name="startSLUP2">
+			<wsdl:input message="tns:startSLUP2"/>
+			<wsdl:output message="tns:startSLUP2Response"/>
+            <wsdl:fault name="fault" message="tns:FaultResponseMsg"/>
+		</wsdl:operation>
+	</wsdl:portType>
+	
+	<wsdl:binding name="slupServiceBinding" type="tns:slupServicePortType">
+		<soapbind:binding style="document" transport="http://schemas.xmlsoap.org/soap/http" />
+                <wsp:PolicyReference URI="#UTTransportPolicy"/>  
+		<wsdl:operation name="startSLUP2">
+			<soapbind:operation soapAction="http://slup2soap.idm.telekom.com/slupService/startSLUP2" />
+			<wsdl:input><soapbind:body use="literal" /></wsdl:input>
+			<wsdl:output><soapbind:body use="literal" /></wsdl:output>
+			<wsdl:fault name="fault"><soapbind:fault use="literal" name="fault" /></wsdl:fault>
+		</wsdl:operation>
+	</wsdl:binding>
+
+<!--  the service definition -->
+	<wsdl:service name="slupService">
+		<wsdl:port name="slupService" binding="tns:slupServiceBinding">
+			<soapbind:address location="https://slup2soap00.idm.ver.sul.t-online.de/slupService/"/>
+		</wsdl:port>
+	</wsdl:service>
+</wsdl:definitions>

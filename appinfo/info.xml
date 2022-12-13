@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<info xmlns:xsi= "http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
+	<id>nmcslup</id>
+	<name>NextMagentaCloud SLave UPdate</name>
+	<summary>NextMagentaCloud SLUP integration</summary>
+	<description>NextMagentaCloud Telekom customer change event integration (SLUP=SLave UPdate)</description>
+	<version>1.0.0-nmc</version>
+	<licence>agpl</licence>
+	<author>Bernd Rederlechner</author>
+	<namespace>NextMagentaCloudSlup</namespace>
+	<category>integration</category>
+	<category>organization</category>
+	<website>https://gitlab.devops.telekom.de/nextmagentacloud/nmcslup</website>
+	<bugs>https://jira.devops.telekom.de/projects/NMCLOUD/issues</bugs>
+	<repository>https://gitlab.devops.telekom.de/nextmagentacloud/nmcslup</repository>
+	<dependencies>
+		    <!-- NextMagentaCloud support must check functionality and increase max-version
+			     with each major release change. See architecture documentation for details.
+     		-->
+		<nextcloud min-version="21" max-version="24"/>
+	</dependencies>
+    <background-jobs>
+	    <job>OCA\NextMagentaCloudSlup\Registration\SlupCircuitControlJob</job>
+    </background-jobs>
+</info>
