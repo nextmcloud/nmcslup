@@ -78,18 +78,3 @@ For dev:
 composer install --dev -o
 ```
 Don´t check in the additionally pulled dev content!
-
-## OBSOLETE: SLUP SOAP test calls
-It is recommended to implement unittests or integration tests instead.
-
-```
-curl -i -X POST -H "Content-Type: application/soap+xml" \
-    -H 'SOAPAction: "http://slup2soap.idm.telekom.com/slupClient/SLUPConnect"' \
-    -d '<?xml version="1.0" encoding="UTF-8"?>
-<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:slupClient="http://slup2soap.idm.telekom.com/slupClient/"><SOAP-ENV:Body><slupClient:SLUPConnect><token>0</token></slupClient:SLUPConnect></SOAP-ENV:Body></SOAP-ENV:Envelope>' http://localhost:8080/index.php/apps/nmcprovisioning/api/1.0/slup
-```
-
-curl -i -X POST -H "Content-Type: application/soap+xml" \
-    -H 'SOAPAction: "http://slup2soap.idm.telekom.com/slupClient/SLUPDisconnect"' \
--d '<?xml version="1.0" encoding="UTF-8"?>
-<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:slupClient="http://slup2soap.idm.telekom.com/slupClient/"><SOAP-ENV:Body><slupClient:SLUPDisconnect><token>0</token></slupClient:SLUPDisconnect></SOAP-ENV:Body></SOAP-ENV:Envelope>' http://localhost:8080/index.php/apps/nmcprovisioning/api/1.0/slup
