@@ -22,6 +22,7 @@
 
 namespace OCA\NextMagentaCloudSlup\Controller;
 
+use OCA\NextMagentaCloudProvisioning\Rules\DisplaynameRules;
 use OCP\ILogger;
 use OCP\IRequest;
 
@@ -48,6 +49,9 @@ class SlupApiController extends SoapApiController {
 	/** @var UserAccountService */
 	private $accountRules;
 
+    /** @var DisplaynameRules */
+    private $displaynameRules;
+
 	/**
 	 * constructor of the controller
 	 *
@@ -67,6 +71,7 @@ class SlupApiController extends SoapApiController {
 								ILogger $logger,
 								SlupRegistrationManager $slupRegistrationMgr,
 								TariffRules $tariffRules,
+                                DisplaynameRules $displaynameRules,
 								UserAccountRules $accountRules,
 								$corsMethods = 'POST',
 								$corsAllowedHeaders = 'Authorization, Content-Type, Accept',
@@ -79,6 +84,7 @@ class SlupApiController extends SoapApiController {
 							$corsMaxAge);
 		$this->slupRegistrationMgr = $slupRegistrationMgr;
 		$this->tariffRules = $tariffRules;
+        $this->displaynameRules = $displaynameRules;
 		$this->accountRules = $accountRules;
 	}
 
@@ -93,7 +99,7 @@ class SlupApiController extends SoapApiController {
 	public function soapCall() {
 		return parent::soapCall();
 	}
-	
+
 	public function getUserDetails($request, string $field, string $prefix = 'urn:telekom.com:') {
 		if ($request === null || $prefix === null) {
 			return null;
@@ -102,7 +108,7 @@ class SlupApiController extends SoapApiController {
 		if (!property_exists($request, $field)) {
 			return null;
 		}
- 
+
 		$claims = new \stdClass();
         $claims->changeTime = $request->changeTime;
 
@@ -131,11 +137,11 @@ class SlupApiController extends SoapApiController {
 	private function getUserName($newFieldsClaims, $oldFieldsClaims, string $prefix = 'urn:telekom.com:') {
 		return $this->getProperty($newFieldsClaims, $oldFieldsClaims, $prefix, 'anid');
 	}
-	
+
 	private function getDisplayName($newFieldsClaims, $oldFieldsClaims, string $prefix = 'urn:telekom.com:') {
-		return $this->tariffRules->deriveDisplayname($newFieldsClaims);
+		return $this->displaynameRules->deriveDisplayname($newFieldsClaims);
 	}
-	
+
 	private function getEmail($newFieldsClaims, $oldFieldsClaims, string $prefix = 'urn:telekom.com:') {
         $mainEmail = $this->getProperty($newFieldsClaims, $oldFieldsClaims, $prefix, 'mainEmail');
         if ( $mainEmail != null ) {
@@ -143,29 +149,29 @@ class SlupApiController extends SoapApiController {
         } else {
             return $this->getProperty($newFieldsClaims, $oldFieldsClaims, $prefix, 'extMail');
         }
-        
+
 	}
-	
+
 	private function getAltEmail($newFieldsClaims, $oldFieldsClaims, string $prefix = 'urn:telekom.com:') {
 		return $this->getProperty($newFieldsClaims, $oldFieldsClaims, $prefix, 'extMail');
 	}
-	
+
 	private function getQuota($newFieldsClaims, string $prefix = 'urn:telekom.com:') {
 		return $this->tariffRules->deriveQuota($newFieldsClaims);
 	}
-	
+
 	// ---------------- Supported SOAP functions ------------------------
 	public function SLUP($request) {
         $this->logger->info("Counting message.");
         $this->slupRegistrationMgr->incrementRecvCount();
-        
+
         $this->logger->info("Checking token.");
 		$token = strval($request->token);
 		if (!$this->slupRegistrationMgr->isValidToken($token)) {
             $this->logger->error("SLUP invalid token on message.");
             // save the currently send token to validate the follow-up disconnect
             // message that must follow
-			$this->slupRegistrationMgr->setToken($token); 
+			$this->slupRegistrationMgr->setToken($token);
 			// signal invalid token
 			return array('returncode' => 'F003', 'detail' => 'invalid token');
 		}
