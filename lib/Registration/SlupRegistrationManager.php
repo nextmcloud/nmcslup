@@ -55,7 +55,7 @@ class SlupRegistrationManager {
 	protected $forceDisconnect = false;
 
 	protected $cache;
-	
+
 	/** @val int */
 	private $controlIntervalSec; // time to next half-open try
 
@@ -75,7 +75,7 @@ class SlupRegistrationManager {
 		$this->urlGenerator = $urlGenerator;
 		$this->clientService = $clientService;
 		$this->config = $config;
-		
+
 		$this->wsdlPath = dirname(__FILE__) . "/slupService.wsdl";
 
 		// in a scaled cluster, it is not a good idea to depend on
@@ -111,6 +111,11 @@ class SlupRegistrationManager {
 
 	public function incrementRecvCount() {
 		$this->cache->inc("recvmsgcount");
+
+        //Invariant: Connection is only successful if the first message is received
+        if($this->isCircuitHalfOpen()){
+            $this->circuitClosed();
+        }
 	}
 
 	public function getRecvCount() {
@@ -219,7 +224,7 @@ class SlupRegistrationManager {
 
         if (!$this->isCircuitOpen()) {
 			// only set cache if clock is not ticking for an older open circuit
-            $this->logger->info("SLUP switched to OPEN");        
+            $this->logger->info("SLUP switched to OPEN");
 		}
         // always refresh state on call
         $this->cache->set("circuitstate", self::CIRCUIT_OPEN, self::CIRCUIT_STATE_MULTIPLIER * $this->getControlInterval());
@@ -232,14 +237,12 @@ class SlupRegistrationManager {
 	public function circuitHalfOpen() {
 		// duration of HALF_OPEN state is potentially undefined
 		// but state is exited quickly, so TTL maximum should be ok
-        $this->logger->info("SLUP switched to HALFOPEN");        
+        $this->logger->info("SLUP switched to HALFOPEN");
 		$this->cache->set("circuitstate", self::CIRCUIT_HALFOPEN, self::CIRCUIT_STATE_MULTIPLIER * $this->getControlInterval());
 		// we log start and scheduling differently, so no log
 		// TODO: signal state to monitoring
 
-		if ($this->registerSlup()) {
-			$this->circuitClosed();
-		} else {
+		if (!$this->registerSlup()) {
 			$this->circuitOpen();
 		}
 	}
@@ -252,10 +255,10 @@ class SlupRegistrationManager {
 		if (!$this->isCircuitClosed()) {
 			$this->logger->info("SLUP circuit CLOSED, normal business");
 		}
-        $this->cache->set("circuitstate", self::CIRCUIT_CLOSED, self::CIRCUIT_STATE_MULTIPLIER * $this->getControlInterval());    
+        $this->cache->set("circuitstate", self::CIRCUIT_CLOSED, self::CIRCUIT_STATE_MULTIPLIER * $this->getControlInterval());
 	}
 
-	
+
 	/**
 	 * return null if connection is not established, otherwise current token.
 	 */
@@ -357,7 +360,7 @@ class SlupRegistrationManager {
 				// for mocking purpose (only)
 				$soapClient = $this->soapClient;
 			}
-			
+
 			//security name-space
 			$strWSSENS = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd";
 			// Create SOAP Vars
