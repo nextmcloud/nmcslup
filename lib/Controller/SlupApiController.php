@@ -195,7 +195,7 @@ class SlupApiController extends SoapApiController {
 
 		try {
 			$this->logger->info("User account modification start");
-			$evalResult = $this->accountRules->deriveAccountState($userName, $displayName, $email, $altEmail, $quota,
+			$evalResult = $this->accountRules->deriveAccountState($userName, $displayName, $email, $quota,
 																	$newFieldsClaims, self::PROVIDER_PREFIX);
 			$this->logger->info(json_encode($evalResult));
 			if ($evalResult['changed']) {
