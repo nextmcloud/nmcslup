@@ -349,7 +349,9 @@ class SlupRegistrationManager {
 		$this->logger->debug($appid . ": Register at " . $gwendpoint . " -cb-> " . $receiverEndpoint);
 
 		try {
+            $this->logger->debug("SLUP try to connect");
 			if (is_null($this->soapClient)) {
+                $this->logger->debug("Creating new SoapClient");
 				// late client creation or mocking to access settings before creation properly
 				$soapClient = new \SoapClient($this->wsdlPath, array('connection_timeout' => 20, // limit response time to 20sec
 					'cache_wsdl' => 0,
@@ -357,6 +359,7 @@ class SlupRegistrationManager {
 					'exceptions' => true,
 					'location' => $gwendpoint));
 			} else {
+                $this->logger->debug("Using existing SoapClient");
 				// for mocking purpose (only)
 				$soapClient = $this->soapClient;
 			}
@@ -407,12 +410,21 @@ class SlupRegistrationManager {
             } else {
                 $level = ILogger::ERROR;
             }
-            $this->logger->logException($fault, [
-                'message' => "Response: " . strval($soapClient->__getLastResponse()) . PHP_EOL .
-                            "SOAPFault code: {$fault->faultcode}:{$slupDetailCode}" . PHP_EOL .
-                            "SOAPFault message: {$fault->faultstring}:{$slupDetailMessage}",
-                'level' => $level,
-                'app' => Application::APP_ID]);
+            if (!$soapClient){
+                $this->logger->debug($fault->getMessage());
+                $this->logger->logException($fault, [
+                    'message' => "SOAPFault code: {$fault->faultcode}:{$slupDetailCode}" . PHP_EOL .
+                        "SOAPFault message: {$fault->faultstring}:{$slupDetailMessage}",
+                    'level' => $level,
+                    'app' => Application::APP_ID]);
+            }else{
+                $this->logger->logException($fault, [
+                    'message' => "Response: " . strval($soapClient?->__getLastResponse()) . PHP_EOL .
+                        "SOAPFault code: {$fault->faultcode}:{$slupDetailCode}" . PHP_EOL .
+                        "SOAPFault message: {$fault->faultstring}:{$slupDetailMessage}",
+                    'level' => $level,
+                    'app' => Application::APP_ID]);
+            }
             throw $fault;
 		} catch (\Throwable $e) {
 			$this->logger->logException($e, [
