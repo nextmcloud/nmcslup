@@ -353,6 +353,9 @@ class SlupRegistrationManager {
 			if (is_null($this->soapClient)) {
                 $this->logger->debug("Creating new SoapClient");
 				// late client creation or mocking to access settings before creation properly
+                libxml_set_external_entity_loader(static function ($public, $system, $context) {
+                    return $system;
+                });
 				$soapClient = new \SoapClient($this->wsdlPath, array('connection_timeout' => 20, // limit response time to 20sec
 					'cache_wsdl' => 0,
 					'trace' => $trace,
