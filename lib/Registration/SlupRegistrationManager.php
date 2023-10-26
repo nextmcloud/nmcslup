@@ -9,6 +9,7 @@ use OCP\IConfig;
 use OCP\ICacheFactory;
 
 use OCA\NextMagentaCloudSlup\AppInfo\Application;
+use SoapClient;
 
 /**
  * Please configure this app for SLUP connection endpoint with the following commands
@@ -356,7 +357,7 @@ class SlupRegistrationManager {
                 libxml_set_external_entity_loader(static function ($public, $system, $context) {
                     return $system;
                 });
-				$soapClient = new \SoapClient($this->wsdlPath, array('connection_timeout' => 20, // limit response time to 20sec
+				$soapClient = new SoapClient($this->wsdlPath, array('connection_timeout' => 20, // limit response time to 20sec
 					'cache_wsdl' => 0,
 					'trace' => $trace,
 					'exceptions' => true,
@@ -424,7 +425,8 @@ class SlupRegistrationManager {
                 $this->logger->logException($fault, [
                     'message' => "Response: " . strval($soapClient?->__getLastResponse()) . PHP_EOL .
                         "SOAPFault code: {$fault->faultcode}:{$slupDetailCode}" . PHP_EOL .
-                        "SOAPFault message: {$fault->faultstring}:{$slupDetailMessage}",
+                        "SOAPFault message: {$fault->faultstring}:{$slupDetailMessage}" . PHP_EOL .
+                        "SOAP Fault request: " . $soapClient?->__getLastRequest() . PHP_EOL,
                     'level' => $level,
                     'app' => Application::APP_ID]);
             }

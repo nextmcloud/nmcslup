@@ -109,13 +109,16 @@ abstract class SoapApiController extends ApiController {
 	}
 
 	protected function soapCall() {
+        libxml_set_external_entity_loader(static function ($public, $system, $context) {
+            return $system;
+        });
 		$soapServer = new \SoapServer($this->wsdlPath);
 		ini_set("soap.wsdl_cache_enabled", "0");
 		$soapServer->setObject($this);
 
 		// this is used to trace all original messages on debug for reuse and transparency
 		$this->logger->debug("Received SLUP message:" . PHP_EOL . file_get_contents("php://input"));
-		
+
 		ob_start();                     //output buffering
 		$soapServer->handle();
 		$soapOutput = ob_get_clean();
