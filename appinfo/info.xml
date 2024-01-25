@@ -18,7 +18,7 @@
 		    <!-- NextMagentaCloud support must check functionality and increase max-version
 			     with each major release change. See architecture documentation for details.
      		-->
-		<nextcloud min-version="21" max-version="25"/>
+		<nextcloud min-version="21" max-version="27"/>
 	</dependencies>
     <background-jobs>
 	    <job>OCA\NextMagentaCloudSlup\Registration\SlupCircuitControlJob</job>
