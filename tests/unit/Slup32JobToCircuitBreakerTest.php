@@ -4,25 +4,25 @@ declare(strict_types=1);
 
 namespace OCA\NextMagentaCloudSlup\UnitTest;
 
-use OCP\IRequest;
-use OCP\ILogger;
-use OCP\IURLGenerator;
-use OCP\IConfig;
-use OCP\ICacheFactory;
-use OCP\AppFramework\Utility\ITimeFactory;
-use OCP\Http\Client\IClientService;
-
-use PHPUnit\Framework\Assert;
-
-use OCA\NextMagentaCloudSlup\TestHelper\SoapTestCase;
-use OCA\NextMagentaCloudSlup\AppInfo\Application;
-use OCA\NextMagentaCloudSlup\Registration\SlupRegistrationManager;
-use OCA\NextMagentaCloudSlup\Controller\SlupApiController;
-
 use OCA\NextMagentaCloudProvisioning\Rules\TariffRules;
 use OCA\NextMagentaCloudProvisioning\Rules\UserAccountRules;
-
+use OCA\NextMagentaCloudSlup\AppInfo\Application;
+use OCA\NextMagentaCloudSlup\Controller\SlupApiController;
 use OCA\NextMagentaCloudSlup\Registration\SlupCircuitControlJob;
+use OCA\NextMagentaCloudSlup\Registration\SlupRegistrationManager;
+use OCA\NextMagentaCloudSlup\TestHelper\SoapTestCase;
+
+use OCP\AppFramework\Utility\ITimeFactory;
+
+use OCP\Http\Client\IClientService;
+use OCP\ICacheFactory;
+use OCP\IConfig;
+use OCP\ILogger;
+
+use OCP\IRequest;
+use OCP\IURLGenerator;
+
+use PHPUnit\Framework\Assert;
 
 class Slup32JobToCircuitBreakerTest extends SoapTestCase {
 
@@ -50,17 +50,17 @@ class Slup32JobToCircuitBreakerTest extends SoapTestCase {
 
 		$this->accountRulesMock = $this->createMock(UserAccountRules::class);
 		$this->slupController = new SlupApiController(Application::APP_ID,
-													$app->getContainer()->get(IRequest::class),
-													$app->getContainer()->get(ILogger::class),
-													$this->registrationManager,
-													$app->getContainer()->get(TariffRules::class),
-													$this->accountRulesMock);
-		$this->startServer($this->slupController, $this->slupController->getWsdlPath());		
+			$app->getContainer()->get(IRequest::class),
+			$app->getContainer()->get(ILogger::class),
+			$this->registrationManager,
+			$app->getContainer()->get(TariffRules::class),
+			$this->accountRulesMock);
+		$this->startServer($this->slupController, $this->slupController->getWsdlPath());
 		$this->app = $app;
 	}
 
 	public function tearDown(): void {
-		parent::tearDown();		
+		parent::tearDown();
 		// in case you need a complete reset of db app values for nmcslup, uncomment this
 		//$this->config->deleteAppValues('nmcslup');
 	}
@@ -96,8 +96,8 @@ class Slup32JobToCircuitBreakerTest extends SoapTestCase {
 		$this->registrationManager->expects($this->once())
 								->method('sendRegistration')
 								->with($this->equalTo('https://slup2soap00.idm.ver.sul.t-online.de/slupService/'),
-										$this->equalTo('10TVL0SLUP0000004901NEXTMAGENTACLOUD0000'),
-										$this->equalTo('<secret>'))
+									$this->equalTo('10TVL0SLUP0000004901NEXTMAGENTACLOUD0000'),
+									$this->equalTo('<secret>'))
 								->willReturn(null);
 
 		$timeFactory = $this->app->getContainer()->get(ITimeFactory::class);
@@ -108,9 +108,9 @@ class Slup32JobToCircuitBreakerTest extends SoapTestCase {
 		$this->assertNotNull($job);
 		$this->assertEquals(300, $job->getInterval());
 
-        $this->registrationManager->forceCircuitUndefined();
+		$this->registrationManager->forceCircuitUndefined();
 		$this->assertTrue($this->registrationManager->isCircuitUndefined());
-        $job->run(null);
+		$job->run(null);
 		$this->assertFalse($this->registrationManager->isCircuitUndefined());
 		$this->assertFalse($this->registrationManager->hasToken());
 		$this->assertTrue($this->registrationManager->isCircuitOpen());
@@ -143,8 +143,8 @@ class Slup32JobToCircuitBreakerTest extends SoapTestCase {
 		$this->registrationManager->expects($this->once())
 								->method('sendRegistration')
 								->with($this->equalTo('https://slup2soap00.idm.ver.sul.t-online.de/slupService/'),
-										$this->equalTo('10TVL0SLUP0000004901NEXTMAGENTACLOUD0000'),
-										$this->equalTo('<secret>'))
+									$this->equalTo('10TVL0SLUP0000004901NEXTMAGENTACLOUD0000'),
+									$this->equalTo('<secret>'))
 								->willReturn('1122334455');
 		$this->registrationManager->circuitHalfOpen();
 		$this->assertTrue($this->registrationManager->hasToken());
@@ -175,10 +175,10 @@ class Slup32JobToCircuitBreakerTest extends SoapTestCase {
 		$this->registrationManager->expects($this->once())
 								->method('sendRegistration')
 								->with($this->equalTo('https://slup2soap00.idm.ver.sul.t-online.de/slupService/'),
-										$this->equalTo('10TVL0SLUP0000004901NEXTMAGENTACLOUD0000'),
-										$this->equalTo('<secret>'))
-                                        ->willThrowException(new \Exception());
-        $job = new SlupCircuitControlJob($timeFactory, $logger, $this->registrationManager);
+									$this->equalTo('10TVL0SLUP0000004901NEXTMAGENTACLOUD0000'),
+									$this->equalTo('<secret>'))
+										->willThrowException(new \Exception());
+		$job = new SlupCircuitControlJob($timeFactory, $logger, $this->registrationManager);
 		$this->assertNotNull($job);
 		$this->assertEquals(SlupRegistrationManager::CIRCUIT_HALFOPEN_DELAY, $job->getInterval());
 			
@@ -210,8 +210,8 @@ class Slup32JobToCircuitBreakerTest extends SoapTestCase {
 		$this->registrationManager->expects($this->once())
 								->method('sendRegistration')
 								->with($this->equalTo('https://slup2soap00.idm.ver.sul.t-online.de/slupService/'),
-										$this->equalTo('10TVL0SLUP0000004901NEXTMAGENTACLOUD0000'),
-										$this->equalTo('<secret>'))
+									$this->equalTo('10TVL0SLUP0000004901NEXTMAGENTACLOUD0000'),
+									$this->equalTo('<secret>'))
 								->willReturn('1122334455');
 		$job = new SlupCircuitControlJob($timeFactory, $logger, $this->registrationManager);
 		$this->assertNotNull($job);
@@ -243,8 +243,8 @@ class Slup32JobToCircuitBreakerTest extends SoapTestCase {
 		$this->registrationManager->expects($this->once())
 								->method('sendRegistration')
 								->with($this->equalTo('https://slup2soap00.idm.ver.sul.t-online.de/slupService/'),
-										$this->equalTo('10TVL0SLUP0000004901NEXTMAGENTACLOUD0000'),
-										$this->equalTo('<secret>'))
+									$this->equalTo('10TVL0SLUP0000004901NEXTMAGENTACLOUD0000'),
+									$this->equalTo('<secret>'))
 								->willReturn('1122334455');
 		$job = new SlupCircuitControlJob($timeFactory, $logger, $this->registrationManager);
 		$this->assertNotNull($job);

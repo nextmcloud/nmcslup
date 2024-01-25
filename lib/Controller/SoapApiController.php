@@ -30,8 +30,8 @@ namespace OCA\NextMagentaCloudSlup\Controller;
 use OCP\AppFramework\ApiController;
 use OCP\AppFramework\Http\Response;
 
-use OCP\IRequest;
 use OCP\ILogger;
+use OCP\IRequest;
 
 /**
  * Base class to inherit a Soap API handling controller from
@@ -62,14 +62,14 @@ abstract class SoapApiController extends ApiController {
 	 * @since 8.1.0
 	 */
 	public function __construct($appName,
-								IRequest $request,
-								string $wsdlPath,
-								ILogger $logger,
-								$corsMethods = 'POST',
-								$corsAllowedHeaders = 'Authorization, Content-Type, Accept',
-								$corsMaxAge = 1728000) {
+		IRequest $request,
+		string $wsdlPath,
+		ILogger $logger,
+		$corsMethods = 'POST',
+		$corsAllowedHeaders = 'Authorization, Content-Type, Accept',
+		$corsMaxAge = 1728000) {
 		parent::__construct($appName, $request, $corsMethods,
-							$corsAllowedHeaders, $corsMaxAge);
+			$corsAllowedHeaders, $corsMaxAge);
 		// some SOAP message use application/soap+xml as content type
 		$this->registerResponder('soap+xml', function ($message) {
 			return $this->buildSoapResponse($message);
@@ -109,9 +109,9 @@ abstract class SoapApiController extends ApiController {
 	}
 
 	protected function soapCall() {
-        libxml_set_external_entity_loader(static function ($public, $system, $context) {
-            return $system;
-        });
+		libxml_set_external_entity_loader(static function ($public, $system, $context) {
+			return $system;
+		});
 		$soapServer = new \SoapServer($this->wsdlPath);
 		ini_set("soap.wsdl_cache_enabled", "0");
 		$soapServer->setObject($this);

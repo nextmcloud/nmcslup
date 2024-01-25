@@ -2,13 +2,13 @@
 
 namespace OCA\NextMagentaCloudSlup\Registration;
 
-use OCP\Http\Client\IClientService;
-use OCP\ILogger;
-use OCP\IURLGenerator;
-use OCP\IConfig;
-use OCP\ICacheFactory;
-
 use OCA\NextMagentaCloudSlup\AppInfo\Application;
+use OCP\Http\Client\IClientService;
+use OCP\ICacheFactory;
+use OCP\IConfig;
+use OCP\ILogger;
+
+use OCP\IURLGenerator;
 use SoapClient;
 
 /**
@@ -26,10 +26,10 @@ class SlupRegistrationManager {
 	public const CACHE_MAX_TIME = 5 * 24 * 3600;
 
 	// sec between HALFOPEN trials, minimum is 300sec
-	public const CIRCUIT_HALFOPEN_DELAY   = 300;
+	public const CIRCUIT_HALFOPEN_DELAY = 300;
 	public const CIRCUIT_STATE_MULTIPLIER = 12;
 
-    public const CIRCUIT_UNDEFINED = 'undefined';
+	public const CIRCUIT_UNDEFINED = 'undefined';
 	public const CIRCUIT_OPEN = 'open';
 	public const CIRCUIT_HALFOPEN = 'halfopen';
 	public const CIRCUIT_CLOSED = 'closed';
@@ -68,10 +68,10 @@ class SlupRegistrationManager {
 	 * @param ICacheFactory $cachefactory
 	 */
 	public function __construct(ILogger $logger,
-								IURLGenerator $urlGenerator,
-								IClientService $clientService,
-								IConfig $config,
-								ICacheFactory $cacheFactory) {
+		IURLGenerator $urlGenerator,
+		IClientService $clientService,
+		IConfig $config,
+		ICacheFactory $cacheFactory) {
 		$this->logger = $logger;
 		$this->urlGenerator = $urlGenerator;
 		$this->clientService = $clientService;
@@ -88,8 +88,8 @@ class SlupRegistrationManager {
 		$this->soapClient = null;
 		// app configs only support string values
 		$controlIntervalSec = intval($this->config->getAppValue('nmcslup', 'slupcontrolintv',
-							strval(self::CIRCUIT_HALFOPEN_DELAY)));
-        $this->setControlInterval($controlIntervalSec);
+			strval(self::CIRCUIT_HALFOPEN_DELAY)));
+		$this->setControlInterval($controlIntervalSec);
 	}
 
 
@@ -113,10 +113,10 @@ class SlupRegistrationManager {
 	public function incrementRecvCount() {
 		$this->cache->inc("recvmsgcount");
 
-        //Invariant: Connection is only successful if the first message is received
-        if($this->isCircuitHalfOpen()){
-            $this->circuitClosed();
-        }
+		//Invariant: Connection is only successful if the first message is received
+		if($this->isCircuitHalfOpen()) {
+			$this->circuitClosed();
+		}
 	}
 
 	public function getRecvCount() {
@@ -167,22 +167,22 @@ class SlupRegistrationManager {
 
 	// ----- circuit breaker handling -----
 
-    /** set control interval to at least 5 min */
-    public function setControlInterval(int $controlIntervalSec) : void {
+	/** set control interval to at least 5 min */
+	public function setControlInterval(int $controlIntervalSec) : void {
 		$this->controlIntervalSec = ($controlIntervalSec < 300) ? 300 : $controlIntervalSec;
 	}
 
-    public function getControlInterval() : int {
+	public function getControlInterval() : int {
 		return $this->controlIntervalSec;
 	}
 
-    /** This method is primarily for test purposes */
-    public function forceCircuitUndefined() {
+	/** This method is primarily for test purposes */
+	public function forceCircuitUndefined() {
 		return $this->cache->remove('circuitstate');
 	}
 
 	public function isCircuitUndefined() : bool {
-        return (!$this->cache->hasKey("circuitstate"));
+		return (!$this->cache->hasKey("circuitstate"));
 	}
 
 	public function isCircuitOpen() : bool {
@@ -204,8 +204,8 @@ class SlupRegistrationManager {
 		if ($this->isCircuitUndefined()) {
 			return self::CIRCUIT_UNDEFINED;
 		} else {
-            return $this->cache->get('circuitstate');
-        }
+			return $this->cache->get('circuitstate');
+		}
 	}
 
 	/**
@@ -217,18 +217,18 @@ class SlupRegistrationManager {
 	 */
 	public function circuitOpen($delay = null) {
 
-        // the delay parameter could be used to enlarge delay artificially from outside
-        // (not used yet)
-        if (!is_null($delay)) {
-            $this->setControlInterval($delay);
-        }
-
-        if (!$this->isCircuitOpen()) {
-			// only set cache if clock is not ticking for an older open circuit
-            $this->logger->info("SLUP switched to OPEN");
+		// the delay parameter could be used to enlarge delay artificially from outside
+		// (not used yet)
+		if (!is_null($delay)) {
+			$this->setControlInterval($delay);
 		}
-        // always refresh state on call
-        $this->cache->set("circuitstate", self::CIRCUIT_OPEN, self::CIRCUIT_STATE_MULTIPLIER * $this->getControlInterval());
+
+		if (!$this->isCircuitOpen()) {
+			// only set cache if clock is not ticking for an older open circuit
+			$this->logger->info("SLUP switched to OPEN");
+		}
+		// always refresh state on call
+		$this->cache->set("circuitstate", self::CIRCUIT_OPEN, self::CIRCUIT_STATE_MULTIPLIER * $this->getControlInterval());
 		// TODO: signal state to monitoring
 	}
 
@@ -238,7 +238,7 @@ class SlupRegistrationManager {
 	public function circuitHalfOpen() {
 		// duration of HALF_OPEN state is potentially undefined
 		// but state is exited quickly, so TTL maximum should be ok
-        $this->logger->info("SLUP switched to HALFOPEN");
+		$this->logger->info("SLUP switched to HALFOPEN");
 		$this->cache->set("circuitstate", self::CIRCUIT_HALFOPEN, self::CIRCUIT_STATE_MULTIPLIER * $this->getControlInterval());
 		// we log start and scheduling differently, so no log
 		// TODO: signal state to monitoring
@@ -256,7 +256,7 @@ class SlupRegistrationManager {
 		if (!$this->isCircuitClosed()) {
 			$this->logger->info("SLUP circuit CLOSED, normal business");
 		}
-        $this->cache->set("circuitstate", self::CIRCUIT_CLOSED, self::CIRCUIT_STATE_MULTIPLIER * $this->getControlInterval());
+		$this->cache->set("circuitstate", self::CIRCUIT_CLOSED, self::CIRCUIT_STATE_MULTIPLIER * $this->getControlInterval());
 	}
 
 
@@ -280,15 +280,15 @@ class SlupRegistrationManager {
 			// to not delay next retry too much
 			// by going into open state
 			$token = $this->sendRegistration($slupGwEndpoint, $slupid, $slupsecret, $trace);
-            $this->setToken($token);
+			$this->setToken($token);
 			return true;
 		} catch (\SoapFault $sf) {
 			$slupDetailCode = $this->getSlupSoapFaultDetail($sf, 'code', 'none');
 			if ($slupDetailCode == 'A007') {
-                // go on, either with the current token or a forced reconnect
-                // on non-matching current token (=A007 at first connect after boot)
-                return true;
-            } else if ($sf->faultcode == 'HTTP') {
+				// go on, either with the current token or a forced reconnect
+				// on non-matching current token (=A007 at first connect after boot)
+				return true;
+			} elseif ($sf->faultcode == 'HTTP') {
 				$this->logger->warning("SLUP try1 http fault failure, direct retry");
 			} else {
 				$this->logger->error("SLUP try1 http fault, giving up");
@@ -305,15 +305,15 @@ class SlupRegistrationManager {
 
 		try {
 			$token = $this->sendRegistration($slupGwEndpoint, $slupid, $slupsecret);
-            $this->setToken($token);
-            return true;
+			$this->setToken($token);
+			return true;
 		} catch (\SoapFault $sf) {
 			$slupDetailCode = $this->getSlupSoapFaultDetail($sf, 'code', 'none');
 			if ($slupDetailCode == 'A007') {
-                // go on, either with the current token or a forced reconnect
-                // on non-matching current token (=A007 at first connect after boot)
-                return true;
-            } else {
+				// go on, either with the current token or a forced reconnect
+				// on non-matching current token (=A007 at first connect after boot)
+				return true;
+			} else {
 				$this->logger->error("SLUP try2 SOAP fault, giving up");
 				$this->clearToken();
 				return false;
@@ -330,7 +330,7 @@ class SlupRegistrationManager {
 	/**
 	 * Stable SLUP fault detail extraction
 	 * Public for unittest support
-     */
+	 */
 	public function getSlupSoapFaultDetail(\SoapFault $fault, String $name, string $default = '') {
 		if (property_exists($fault, 'detail') &&
 			 property_exists($fault->detail, 'FaultResponse') &&
@@ -350,20 +350,20 @@ class SlupRegistrationManager {
 		$this->logger->debug($appid . ": Register at " . $gwendpoint . " -cb-> " . $receiverEndpoint);
 
 		try {
-            $this->logger->debug("SLUP try to connect");
+			$this->logger->debug("SLUP try to connect");
 			if (is_null($this->soapClient)) {
-                $this->logger->debug("Creating new SoapClient");
+				$this->logger->debug("Creating new SoapClient");
 				// late client creation or mocking to access settings before creation properly
-                libxml_set_external_entity_loader(static function ($public, $system, $context) {
-                    return $system;
-                });
+				libxml_set_external_entity_loader(static function ($public, $system, $context) {
+					return $system;
+				});
 				$soapClient = new SoapClient($this->wsdlPath, array('connection_timeout' => 20, // limit response time to 20sec
 					'cache_wsdl' => 0,
 					'trace' => $trace,
 					'exceptions' => true,
 					'location' => $gwendpoint));
 			} else {
-                $this->logger->debug("Using existing SoapClient");
+				$this->logger->debug("Using existing SoapClient");
 				// for mocking purpose (only)
 				$soapClient = $this->soapClient;
 			}
@@ -396,7 +396,7 @@ class SlupRegistrationManager {
 			$this->logger->debug("startSLUP2: " . $soapClient->__getLastResponse());
 			if ($response->SLUPreturncode == '0000') {
 				// these are the cases when we ar connected
-                return $response->token;
+				return $response->token;
 			} else {
 				$this->logger->critical("Response: " . strval($soapClient->__getLastResponse()) . PHP_EOL .
 										"SLUP-Connect code: {$response->SLUPreturncode}, message: {$response->detail}");
@@ -408,29 +408,29 @@ class SlupRegistrationManager {
 			$slupDetailMessage = $this->getSlupSoapFaultDetail($fault, 'message', 'none');
 			// A007 already connected is delivered as SOAPFault
 			// and handled as "good" state; so this special sitation
-            // is only logged in debug mode
-            if ($slupDetailCode == 'A007') {
-                $level = ILogger::DEBUG;
-            } else {
-                $level = ILogger::ERROR;
-            }
-            if (!$soapClient){
-                $this->logger->debug($fault->getMessage());
-                $this->logger->logException($fault, [
-                    'message' => "SOAPFault code: {$fault->faultcode}:{$slupDetailCode}" . PHP_EOL .
-                        "SOAPFault message: {$fault->faultstring}:{$slupDetailMessage}",
-                    'level' => $level,
-                    'app' => Application::APP_ID]);
-            }else{
-                $this->logger->logException($fault, [
-                    'message' => "Response: " . strval($soapClient?->__getLastResponse()) . PHP_EOL .
-                        "SOAPFault code: {$fault->faultcode}:{$slupDetailCode}" . PHP_EOL .
-                        "SOAPFault message: {$fault->faultstring}:{$slupDetailMessage}" . PHP_EOL .
-                        "SOAP Fault request: " . $soapClient?->__getLastRequest() . PHP_EOL,
-                    'level' => $level,
-                    'app' => Application::APP_ID]);
-            }
-            throw $fault;
+			// is only logged in debug mode
+			if ($slupDetailCode == 'A007') {
+				$level = ILogger::DEBUG;
+			} else {
+				$level = ILogger::ERROR;
+			}
+			if (!$soapClient) {
+				$this->logger->debug($fault->getMessage());
+				$this->logger->logException($fault, [
+					'message' => "SOAPFault code: {$fault->faultcode}:{$slupDetailCode}" . PHP_EOL .
+						"SOAPFault message: {$fault->faultstring}:{$slupDetailMessage}",
+					'level' => $level,
+					'app' => Application::APP_ID]);
+			} else {
+				$this->logger->logException($fault, [
+					'message' => "Response: " . strval($soapClient?->__getLastResponse()) . PHP_EOL .
+						"SOAPFault code: {$fault->faultcode}:{$slupDetailCode}" . PHP_EOL .
+						"SOAPFault message: {$fault->faultstring}:{$slupDetailMessage}" . PHP_EOL .
+						"SOAP Fault request: " . $soapClient?->__getLastRequest() . PHP_EOL,
+					'level' => $level,
+					'app' => Application::APP_ID]);
+			}
+			throw $fault;
 		} catch (\Throwable $e) {
 			$this->logger->logException($e, [
 				'message' => "Error code: {$e->getCode()}, message: {$e->getMessage()})",

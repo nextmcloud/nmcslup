@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace OCA\NextMagentaCloudSlup\UnitTest;
 
+use OCA\NextMagentaCloudSlup\AppInfo\Application;
+use OCA\NextMagentaCloudSlup\Registration\SlupConnectException;
+use OCA\NextMagentaCloudSlup\Registration\SlupRegistrationManager;
+use OCP\Http\Client\IClientService;
+use OCP\ICacheFactory;
+
+use OCP\IConfig;
+
 use OCP\ILogger;
 use OCP\IURLGenerator;
-use OCP\IConfig;
-use OCP\ICacheFactory;
-use OCP\Http\Client\IClientService;
-
 use PHPUnit\Framework\TestCase;
-
-use OCA\NextMagentaCloudSlup\AppInfo\Application;
-use OCA\NextMagentaCloudSlup\Registration\SlupRegistrationManager;
-use OCA\NextMagentaCloudSlup\Registration\SlupConnectException;
 
 class Slup20SendRegistrationTest extends TestCase {
 
@@ -30,18 +30,18 @@ class Slup20SendRegistrationTest extends TestCase {
 		$this->config = $app->getContainer()->get(IConfig::class);
 		$this->urlGenerator = $app->getContainer()->get(IURLGenerator::class);
 		$this->registrationManager = new SlupRegistrationManager($app->getContainer()->get(ILogger::class),
-																$this->urlGenerator,
-																$app->getContainer()->get(IClientService::class),
-																$this->config,
-																$app->getContainer()->get(ICacheFactory::class));
+			$this->urlGenerator,
+			$app->getContainer()->get(IClientService::class),
+			$this->config,
+			$app->getContainer()->get(ICacheFactory::class));
 		$this->soapClientMock = $this->getMockFromWsdl($this->registrationManager->getWsdlPath());
 		$this->registrationManager->replaceSoapClient($this->soapClientMock);
 
 		$this->realConnectManager = new SlupRegistrationManager($app->getContainer()->get(ILogger::class),
-																$this->urlGenerator,
-																$app->getContainer()->get(IClientService::class),
-																$this->config,
-																$app->getContainer()->get(ICacheFactory::class));
+			$this->urlGenerator,
+			$app->getContainer()->get(IClientService::class),
+			$this->config,
+			$app->getContainer()->get(ICacheFactory::class));
 	}
 
 	public function testSendRegistrationOk0000() {
@@ -56,8 +56,8 @@ class Slup20SendRegistrationTest extends TestCase {
 			->with($this->equalTo([ 'slupURL' => $eventEndpoint ]))
 			->willReturn($result);
 		$token = $this->registrationManager->sendRegistration('https://slup2soap00.idm.ver.sul.t-online.de/slupServiceX/',
-															'10TVL0SLUP0000004901NEXTMAGENTACLOUD0000',
-															'<secret>');
+			'10TVL0SLUP0000004901NEXTMAGENTACLOUD0000',
+			'<secret>');
 		$this->assertEquals('12233445678', $token);
 	}
 
@@ -91,7 +91,7 @@ class Slup20SendRegistrationTest extends TestCase {
 	public function testSendRegistrationConnectedA007() {
 		$eventEndpoint = $this->urlGenerator->linkToRouteAbsolute(Application::APP_ID . '.SlupApi.soapCall');
 
-        $this->registrationManager->forceReconnect();
+		$this->registrationManager->forceReconnect();
 		$detail = new \stdClass;
 		$detail->FaultResponse = new \stdClass;
 		$detail->FaultResponse->code = 'A007';
@@ -101,18 +101,18 @@ class Slup20SendRegistrationTest extends TestCase {
 			->with($this->equalTo([ 'slupURL' => $eventEndpoint ]))
 			->will($this->throwException(new \SoapFault('SOAP-ENV:Server', 'Application error', null, $detail)));
 		
-        try {
-            $token = $this->registrationManager->sendRegistration('https://slup2soap00.idm.ver.sul.t-online.de/slupServiceX/',
-                '10TVL0SLUP0000004901NEXTMAGENTACLOUD0000',
-                '<secret>');
-            $this->fail("Unexpected behavior");
-        } catch (\SoapFault $sf) {
+		try {
+			$token = $this->registrationManager->sendRegistration('https://slup2soap00.idm.ver.sul.t-online.de/slupServiceX/',
+				'10TVL0SLUP0000004901NEXTMAGENTACLOUD0000',
+				'<secret>');
+			$this->fail("Unexpected behavior");
+		} catch (\SoapFault $sf) {
 			$slupDetailCode = $this->registrationManager->getSlupSoapFaultDetail($sf, 'code', 'none');
-            $this->assertEquals("A007", $slupDetailCode);
-            
-        } 
+			$this->assertEquals("A007", $slupDetailCode);
+			
+		}
 
-    }
+	}
 
 	public function testSendRegistrationSLUPFail() {
 		$eventEndpoint = $this->urlGenerator->linkToRouteAbsolute(Application::APP_ID . '.SlupApi.soapCall');
@@ -131,16 +131,16 @@ class Slup20SendRegistrationTest extends TestCase {
 
 		$this->expectException(SlupConnectException::class);
 		$this->registrationManager->sendRegistration('https://slup2soap00.idm.ver.sul.t-online.de/slupService/',
-													'10TVL0SLUP0000004901NEXTMAGENTACLOUD0000',
-													'<secret>');
-        $this->assertFalse($this->registrationManager->hasToken());                                            
+			'10TVL0SLUP0000004901NEXTMAGENTACLOUD0000',
+			'<secret>');
+		$this->assertFalse($this->registrationManager->hasToken());
 	}
 
 	public function testSendRegistrationNullFail() {
 		//$this->expectException(SlupConnectException::class);
 		$this->expectException(\Exception::class);
 		$this->realConnectManager->sendRegistration('https://slup2soap00.idm.ver.sul.t-online.de/inaccessibleService/',
-													'10TVL0SLUP0000004901NEXTMAGENTACLOUD0000',
-													'<secret>');
+			'10TVL0SLUP0000004901NEXTMAGENTACLOUD0000',
+			'<secret>');
 	}
 }

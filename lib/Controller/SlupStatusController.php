@@ -22,13 +22,13 @@
 
 namespace OCA\NextMagentaCloudSlup\Controller;
 
-use OCP\ILogger;
-use OCP\IRequest;
-
-use OCP\AppFramework\ApiController;
-use OCP\AppFramework\Http\DataResponse;
-
 use OCA\NextMagentaCloudSlup\Registration\SlupRegistrationManager;
+use OCP\AppFramework\ApiController;
+
+use OCP\AppFramework\Http\DataResponse;
+use OCP\ILogger;
+
+use OCP\IRequest;
 
 class SlupStatusController extends ApiController {
 
@@ -54,16 +54,16 @@ class SlupStatusController extends ApiController {
 	 * request should be cached, defaults to 1728000 seconds
 	 */
 	public function __construct($appName,
-								IRequest $request,
-								ILogger $logger,
-								SlupRegistrationManager $slupRegistrationMgr,
-								$corsMethods = 'POST',
-								$corsAllowedHeaders = 'Authorization, Content-Type, Accept',
-								$corsMaxAge = 1728000) {
-            parent::__construct($appName, $request, $corsMethods,
-                                $corsAllowedHeaders, $corsMaxAge);
-        $this->logger = $logger;
-        $this->slupRegistrationMgr = $slupRegistrationMgr;
+		IRequest $request,
+		ILogger $logger,
+		SlupRegistrationManager $slupRegistrationMgr,
+		$corsMethods = 'POST',
+		$corsAllowedHeaders = 'Authorization, Content-Type, Accept',
+		$corsMaxAge = 1728000) {
+		parent::__construct($appName, $request, $corsMethods,
+			$corsAllowedHeaders, $corsMaxAge);
+		$this->logger = $logger;
+		$this->slupRegistrationMgr = $slupRegistrationMgr;
 	}
 
 	/**
@@ -75,9 +75,9 @@ class SlupStatusController extends ApiController {
 	 * @PublicPage
 	 */
 	public function status() {
-        return new DataResponse(array( 'circuit_state' => $this->slupRegistrationMgr->circuitState(),
-                                       'has_token' => $this->slupRegistrationMgr->hasToken() ? 'true' : 'false',
-                                       'num_msg_since_keepalive' =>  $this->slupRegistrationMgr->getRecvCount() ?? 0));
+		return new DataResponse(array( 'circuit_state' => $this->slupRegistrationMgr->circuitState(),
+			'has_token' => $this->slupRegistrationMgr->hasToken() ? 'true' : 'false',
+			'num_msg_since_keepalive' => $this->slupRegistrationMgr->getRecvCount() ?? 0));
 
-    }
+	}
 }

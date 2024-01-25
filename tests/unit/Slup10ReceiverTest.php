@@ -4,22 +4,22 @@ declare(strict_types=1);
 
 namespace OCA\NextMagentaCloudSlup\UnitTest;
 
-use OCA\NextMagentaCloudSlup\TestHelper\SoapTestCase;
+use OCA\NextMagentaCloudProvisioning\Rules\TariffRules;
 
+use OCA\NextMagentaCloudProvisioning\Rules\UserAccountRules;
+
+use OCA\NextMagentaCloudProvisioning\User\NmcUserService;
+use OCA\NextMagentaCloudSlup\AppInfo\Application;
+use OCA\NextMagentaCloudSlup\Controller\SlupApiController;
+
+use OCA\NextMagentaCloudSlup\Registration\SlupRegistrationManager;
+use OCA\NextMagentaCloudSlup\TestHelper\SoapTestCase;
 use OCA\UserOIDC\Db\User;
 
 use OCP\IConfig;
+
 use OCP\ILogger;
 use OCP\IRequest;
-
-use OCA\NextMagentaCloudSlup\AppInfo\Application;
-use OCA\NextMagentaCloudSlup\Controller\SlupApiController;
-use OCA\NextMagentaCloudSlup\Registration\SlupRegistrationManager;
-
-use OCA\NextMagentaCloudProvisioning\User\NmcUserService;
-
-use OCA\NextMagentaCloudProvisioning\Rules\TariffRules;
-use OCA\NextMagentaCloudProvisioning\Rules\UserAccountRules;
 
 /**
  * This test must be run with --stderr, e.g.
@@ -49,19 +49,19 @@ class Slup10ReceiverTest extends SoapTestCase {
 		$this->config = $this->getMockForAbstractClass(IConfig::class);
 		$app = new \OCP\AppFramework\App(Application::APP_ID);
 		$this->accountRules = new UserAccountRules($this->config,
-													   $app->getContainer()->get(ILogger::class),
-													   $this->userServiceMock);
+			$app->getContainer()->get(ILogger::class),
+			$this->userServiceMock);
 		$this->slupController = new SlupApiController(Application::APP_ID,
-													  $app->getContainer()->get(IRequest::class),
-													  $app->getContainer()->get(ILogger::class),
-													  $this->registrationManagerMock,
-													  $app->getContainer()->get(TariffRules::class),
-													  $this->accountRules);
+			$app->getContainer()->get(IRequest::class),
+			$app->getContainer()->get(ILogger::class),
+			$this->registrationManagerMock,
+			$app->getContainer()->get(TariffRules::class),
+			$this->accountRules);
 		$this->startServer($this->slupController, $this->slupController->getWsdlPath());
 	}
 
 	protected function assertTariffCreated($message, $tariff) {
-        $this->registrationManagerMock->expects($this->once())
+		$this->registrationManagerMock->expects($this->once())
 						   ->method('incrementRecvCount');
 		$this->registrationManagerMock->expects($this->once())
 						   ->method('isValidToken')
@@ -76,8 +76,8 @@ class Slup10ReceiverTest extends SoapTestCase {
 		$this->userServiceMock->expects($this->once())
 						->method('create')
 						->with($this->equalTo('Telekom'), $this->equalTo('120049010000000000590615'), $this->equalTo('Christa.Haller4'),
-						   $this->equalTo('Christa.Haller4@ver.sul.t-online.de'), $this->equalTo(null), $this->equalTo($tariff),
-						   $this->equalTo(false), $this->equalTo(true))
+							$this->equalTo('Christa.Haller4@ver.sul.t-online.de'), $this->equalTo(null), $this->equalTo($tariff),
+							$this->equalTo(false), $this->equalTo(true))
 						->willReturn('120049010000000000590615');
 
 
@@ -285,7 +285,7 @@ class Slup10ReceiverTest extends SoapTestCase {
       XML;
 
 	protected function assertTariffUpdated($message, $tariff, $mainEmail = 'Christa.Haller4@ver.sul.t-online.de', $extEmail = null) {
-        $this->registrationManagerMock->expects($this->once())
+		$this->registrationManagerMock->expects($this->once())
 						   ->method('incrementRecvCount');
 		$this->registrationManagerMock->expects($this->once())
 					 ->method('isValidToken')
@@ -316,8 +316,8 @@ class Slup10ReceiverTest extends SoapTestCase {
 		$this->userServiceMock->expects($this->once())
 						   ->method('update')
 						   ->with($this->equalTo('Telekom'), $this->equalTo('120049010000000000590615'), $this->equalTo('Christa.Haller4'),
-								 $this->equalTo($mainEmail), $this->equalTo($extEmail), $this->equalTo($tariff),
-								 $this->equalTo(false), $this->equalTo(true))
+						   	$this->equalTo($mainEmail), $this->equalTo($extEmail), $this->equalTo($tariff),
+						   	$this->equalTo(false), $this->equalTo(true))
 						   ->willReturn('120049010000000000590615');
 
 		$result = $this->callSoap($message);
@@ -327,7 +327,7 @@ class Slup10ReceiverTest extends SoapTestCase {
 
 	public function testUpdate15GB() {
 		$this->assertTariffUpdated(self::MESSAGE_BOOKED15GB, TariffRules::NMC_RATE_S15,
-                                    'Christa.Haller4@ver.sul.t-online.de', 'Christa.Haller4@ver.sul.t-online.de');
+			'Christa.Haller4@ver.sul.t-online.de', 'Christa.Haller4@ver.sul.t-online.de');
 	}
 
 	public const MESSAGE_BOOKED25GB = <<<XML
@@ -396,8 +396,8 @@ class Slup10ReceiverTest extends SoapTestCase {
       XML;
 
 	public function testUpdate25GB() {
-		$this->assertTariffUpdated(self::MESSAGE_BOOKED25GB, TariffRules::NMC_RATE_S25, 
-                                    'Christa.Haller4@ver.sul.t-online.de', 'Christa.Haller4@magenta.de');
+		$this->assertTariffUpdated(self::MESSAGE_BOOKED25GB, TariffRules::NMC_RATE_S25,
+			'Christa.Haller4@ver.sul.t-online.de', 'Christa.Haller4@magenta.de');
 	}
 
 	public const MESSAGE_BOOKED100GB = <<<XML
@@ -535,10 +535,10 @@ class Slup10ReceiverTest extends SoapTestCase {
    XML;
 
 	public function testUpdate500GB() {
-    	//	$this->assertTariffUpdated(self::MESSAGE_BOOKED500GB, TariffRules::NMC_RATE_L500, null, null);
+		//	$this->assertTariffUpdated(self::MESSAGE_BOOKED500GB, TariffRules::NMC_RATE_L500, null, null);
 
-        // current displayname workaround
-        $this->assertTariffUpdated(self::MESSAGE_BOOKED500GB, TariffRules::NMC_RATE_L500, 'Christa.Haller4@magna.de', 'Christa.Haller4@magna.de');
+		// current displayname workaround
+		$this->assertTariffUpdated(self::MESSAGE_BOOKED500GB, TariffRules::NMC_RATE_L500, 'Christa.Haller4@magna.de', 'Christa.Haller4@magna.de');
 	}
 
 
@@ -754,8 +754,8 @@ class Slup10ReceiverTest extends SoapTestCase {
 	 * Expected result: user is never created
 	 */
 	public function testWithdrawNonExistingUser() {
-        $this->registrationManagerMock->expects($this->once())
-            ->method('incrementRecvCount');
+		$this->registrationManagerMock->expects($this->once())
+			->method('incrementRecvCount');
 
 		$this->registrationManagerMock->expects($this->once())
 		 ->method('isValidToken')
@@ -773,7 +773,7 @@ class Slup10ReceiverTest extends SoapTestCase {
 		 ->method('update');
 
 		$result = $this->callSoap(self::MESSAGE_WITHDRAW);
-        $this->assertSlupResponse("0000", $result, "No tariff no new account");
+		$this->assertSlupResponse("0000", $result, "No tariff no new account");
 	}
    
 
@@ -781,7 +781,7 @@ class Slup10ReceiverTest extends SoapTestCase {
 	 * Expected result: user is set to read-only (quota 0 B)
 	 */
 	public function testWithdrawExistingUser() {
-        $this->registrationManagerMock->expects($this->once())
+		$this->registrationManagerMock->expects($this->once())
 						   ->method('incrementRecvCount');
 		$this->registrationManagerMock->expects($this->once())
 		 ->method('isValidToken')
@@ -809,15 +809,15 @@ class Slup10ReceiverTest extends SoapTestCase {
 			   ->method('markDeletion')
 			   ->with($this->equalTo('120049010000000000590615'), $this->equalTo($withdrawTime))
 			   ->willReturn(new \DateTime());
-   	
+	
 		$this->userServiceMock->expects($this->never())
 			->method('create');
 
 		$this->userServiceMock->expects($this->once())
 			->method('update')
 			->with($this->equalTo('Telekom'), $this->equalTo('120049010000000000590615'), $this->equalTo('Christa.Haller4'),
-					 $this->equalTo('Christa.Haller4@ver.sul.t-online.de'), $this->isNull(), $this->isType('string'),
-					 $this->isFalse(), $this->isFalse())
+				$this->equalTo('Christa.Haller4@ver.sul.t-online.de'), $this->isNull(), $this->isType('string'),
+				$this->isFalse(), $this->isFalse())
 			->willReturn('120049010000000000590615');
 
 		$result = $this->callSoap(self::MESSAGE_WITHDRAW);
@@ -890,7 +890,7 @@ class Slup10ReceiverTest extends SoapTestCase {
       XML;
 
 	public function testLockNonExistingUser() {
-        $this->registrationManagerMock->expects($this->once())
+		$this->registrationManagerMock->expects($this->once())
 						   ->method('incrementRecvCount');
 		$this->registrationManagerMock->expects($this->once())
 		 ->method('isValidToken')
@@ -913,7 +913,7 @@ class Slup10ReceiverTest extends SoapTestCase {
 
 
 	public function testLockExistingUser() {
-        $this->registrationManagerMock->expects($this->once())
+		$this->registrationManagerMock->expects($this->once())
 						   ->method('incrementRecvCount');
 		$this->registrationManagerMock->expects($this->once())
 		 ->method('isValidToken')
@@ -940,8 +940,8 @@ class Slup10ReceiverTest extends SoapTestCase {
 		$this->userServiceMock->expects($this->once())
 			->method('update')
 			->with($this->equalTo('Telekom'), $this->equalTo('120049010000000000590615'), $this->equalTo('Christa.Haller4'),
-					 $this->equalTo('Christa.Haller4@ver.sul.t-online.de'), $this->isNull(), $this->isType('string'),
-					 $this->equalTo(false), $this->equalTo(false))
+				$this->equalTo('Christa.Haller4@ver.sul.t-online.de'), $this->isNull(), $this->isType('string'),
+				$this->equalTo(false), $this->equalTo(false))
 			->willReturn('120049010000000000590615');
 		$result = $this->callSoap(self::MESSAGE_LOCKED);
 		$this->assertSlupResponse("0010", $result, "Locked");

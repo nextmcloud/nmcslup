@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace OCA\NextMagentaCloudSlup\UnitTest;
 
-use OCP\ILogger;
-use OCP\IURLGenerator;
-use OCP\IConfig;
-use OCP\ICacheFactory;
+use OCA\NextMagentaCloudSlup\AppInfo\Application;
+use OCA\NextMagentaCloudSlup\Registration\SlupRegistrationManager;
+use OCA\NextMagentaCloudSlup\TestHelper\SoapTestCase;
+use OCP\AppFramework\App;
 use OCP\Http\Client\IClientService;
 
+use OCP\ICacheFactory;
+
+use OCP\IConfig;
+
+use OCP\ILogger;
+use OCP\IURLGenerator;
 use PHPUnit\Framework\Assert;
-
-use OCP\AppFramework\App;
-
-use OCA\NextMagentaCloudSlup\AppInfo\Application;
-use OCA\NextMagentaCloudSlup\TestHelper\SoapTestCase;
-use OCA\NextMagentaCloudSlup\Registration\SlupRegistrationManager;
 
 class Slup30CircuitBreakerTest extends SoapTestCase {
 
@@ -33,7 +33,7 @@ class Slup30CircuitBreakerTest extends SoapTestCase {
 	public function setUp(): void {
 		parent::setUp();
 		$app = new App(Application::APP_ID);
-		$this->config = $this->getMockForAbstractClass(IConfig::class);	
+		$this->config = $this->getMockForAbstractClass(IConfig::class);
 		$this->urlGenerator = $app->getContainer()->get(IURLGenerator::class);
 		$this->registrationManager = $this->getMockBuilder(SlupRegistrationManager::class)
 										->onlyMethods(['sendRegistration'])
@@ -69,7 +69,7 @@ class Slup30CircuitBreakerTest extends SoapTestCase {
 					->with($this->equalTo('nmcslup'), $this->equalTo('slupgwendpoint'))
 					->willReturn('https://slup2soap00.idm.ver.sul.t-online.de/slupService/');
 
-        // set state open, assert job creation
+		// set state open, assert job creation
 		$this->registrationManager->circuitOpen();
 		$this->assertFalse($this->registrationManager->hasToken());
 
@@ -77,15 +77,15 @@ class Slup30CircuitBreakerTest extends SoapTestCase {
 		$this->registrationManager->expects($this->once())
 								->method('sendRegistration')
 								->with($this->equalTo('https://slup2soap00.idm.ver.sul.t-online.de/slupService/'),
-										$this->equalTo('10TVL0SLUP0000004901NEXTMAGENTACLOUD0000'),
-										$this->equalTo('<secret>'))
+									$this->equalTo('10TVL0SLUP0000004901NEXTMAGENTACLOUD0000'),
+									$this->equalTo('<secret>'))
 								->willReturn('1122334455');
 		$this->registrationManager->circuitHalfOpen();
 		$this->assertTrue($this->registrationManager->hasToken());
 		$this->assertTrue($this->registrationManager->isValidToken('1122334455'));
 		$this->assertFalse($this->registrationManager->isValidToken('1122334466'));
 		$this->assertEquals(SlupRegistrationManager::CIRCUIT_CLOSED,
-							$this->registrationManager->circuitState());
+			$this->registrationManager->circuitState());
 		$this->assertFalse($this->registrationManager->isCircuitOpen());
 		$this->assertFalse($this->registrationManager->isCircuitHalfOpen());
 		$this->assertTrue($this->registrationManager->isCircuitClosed());
@@ -119,7 +119,7 @@ class Slup30CircuitBreakerTest extends SoapTestCase {
 		$this->assertFalse($this->registrationManager->isValidToken('1122334455'));
 		$this->assertFalse($this->registrationManager->isValidToken('1122334466'));
 		$this->assertEquals(SlupRegistrationManager::CIRCUIT_OPEN,
-							$this->registrationManager->circuitState());
+			$this->registrationManager->circuitState());
 		$this->assertTrue($this->registrationManager->isCircuitOpen());
 		$this->assertFalse($this->registrationManager->isCircuitHalfOpen());
 		$this->assertFalse($this->registrationManager->isCircuitClosed());
@@ -147,7 +147,7 @@ class Slup30CircuitBreakerTest extends SoapTestCase {
 					->with($this->equalTo('nmcslup'), $this->equalTo('slupgwendpoint'))
 					->willReturn('https://slup2soap00.idm.ver.sul.t-online.de/slupService/');
 
-        // set state open, assert job creation
+		// set state open, assert job creation
 		$this->registrationManager->circuitOpen();
 		$this->assertFalse($this->registrationManager->hasToken());
 
@@ -160,7 +160,7 @@ class Slup30CircuitBreakerTest extends SoapTestCase {
 		$this->assertFalse($this->registrationManager->isValidToken('1122334455'));
 		$this->assertFalse($this->registrationManager->isValidToken('1122334466'));
 		$this->assertEquals(SlupRegistrationManager::CIRCUIT_OPEN,
-							$this->registrationManager->circuitState());
+			$this->registrationManager->circuitState());
 		$this->assertTrue($this->registrationManager->isCircuitOpen());
 		$this->assertFalse($this->registrationManager->isCircuitHalfOpen());
 		$this->assertFalse($this->registrationManager->isCircuitClosed());
