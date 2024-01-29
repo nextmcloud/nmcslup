@@ -23,16 +23,16 @@
 namespace OCA\NextMagentaCloudSlup\Controller;
 
 use OCA\NextMagentaCloudProvisioning\Rules\DisplaynameRules;
-use OCP\ILogger;
-use OCP\IRequest;
-
-use OCA\NextMagentaCloudSlup\Registration\SlupRegistrationManager;
-use OCA\NextMagentaCloudSlup\User\UserExistException;
-use OCA\NextMagentaCloudSlup\Service\ForbiddenException;
-use OCA\NextMagentaCloudSlup\Service\NotFoundException;
-
 use OCA\NextMagentaCloudProvisioning\Rules\TariffRules;
 use OCA\NextMagentaCloudProvisioning\Rules\UserAccountRules;
+
+use OCA\NextMagentaCloudSlup\Registration\SlupRegistrationManager;
+use OCA\NextMagentaCloudSlup\Service\ForbiddenException;
+use OCA\NextMagentaCloudSlup\Service\NotFoundException;
+use OCA\NextMagentaCloudSlup\User\UserExistException;
+
+use OCP\ILogger;
+use OCP\IRequest;
 
 class SlupApiController extends SoapApiController {
 	public const PROVIDER_PREFIX = 'Telekom';
@@ -49,8 +49,8 @@ class SlupApiController extends SoapApiController {
 	/** @var UserAccountService */
 	private $accountRules;
 
-    /** @var DisplaynameRules */
-    private $displaynameRules;
+	/** @var DisplaynameRules */
+	private $displaynameRules;
 
 	/**
 	 * constructor of the controller
@@ -67,24 +67,24 @@ class SlupApiController extends SoapApiController {
 	 * request should be cached, defaults to 1728000 seconds
 	 */
 	public function __construct($appName,
-								IRequest $request,
-								ILogger $logger,
-								SlupRegistrationManager $slupRegistrationMgr,
-								TariffRules $tariffRules,
-                                DisplaynameRules $displaynameRules,
-								UserAccountRules $accountRules,
-								$corsMethods = 'POST',
-								$corsAllowedHeaders = 'Authorization, Content-Type, Accept',
-								$corsMaxAge = 1728000) {
+		IRequest $request,
+		ILogger $logger,
+		SlupRegistrationManager $slupRegistrationMgr,
+		TariffRules $tariffRules,
+		DisplaynameRules $displaynameRules,
+		UserAccountRules $accountRules,
+		$corsMethods = 'POST',
+		$corsAllowedHeaders = 'Authorization, Content-Type, Accept',
+		$corsMaxAge = 1728000) {
 		parent::__construct($appName, $request,
-							$wsdlPath = dirname(__FILE__) . "/slupClient.wsdl",
-							$logger,
-							$corsMethods,
-							$corsAllowedHeaders,
-							$corsMaxAge);
+			$wsdlPath = dirname(__FILE__) . "/slupClient.wsdl",
+			$logger,
+			$corsMethods,
+			$corsAllowedHeaders,
+			$corsMaxAge);
 		$this->slupRegistrationMgr = $slupRegistrationMgr;
 		$this->tariffRules = $tariffRules;
-        $this->displaynameRules = $displaynameRules;
+		$this->displaynameRules = $displaynameRules;
 		$this->accountRules = $accountRules;
 	}
 
@@ -110,7 +110,7 @@ class SlupApiController extends SoapApiController {
 		}
 
 		$claims = new \stdClass();
-        $claims->changeTime = $request->changeTime;
+		$claims->changeTime = $request->changeTime;
 
 		foreach ($request->$field as $element) {
 			$claims->{$prefix . $element->name} = $element->val;
@@ -143,12 +143,12 @@ class SlupApiController extends SoapApiController {
 	}
 
 	private function getEmail($newFieldsClaims, $oldFieldsClaims, string $prefix = 'urn:telekom.com:') {
-        $mainEmail = $this->getProperty($newFieldsClaims, $oldFieldsClaims, $prefix, 'mainEmail');
-        if ( $mainEmail != null ) {
-            return $mainEmail;
-        } else {
-            return $this->getProperty($newFieldsClaims, $oldFieldsClaims, $prefix, 'extMail');
-        }
+		$mainEmail = $this->getProperty($newFieldsClaims, $oldFieldsClaims, $prefix, 'mainEmail');
+		if ($mainEmail != null) {
+			return $mainEmail;
+		} else {
+			return $this->getProperty($newFieldsClaims, $oldFieldsClaims, $prefix, 'extMail');
+		}
 
 	}
 
@@ -162,15 +162,15 @@ class SlupApiController extends SoapApiController {
 
 	// ---------------- Supported SOAP functions ------------------------
 	public function SLUP($request) {
-        $this->logger->info("Counting message.");
-        $this->slupRegistrationMgr->incrementRecvCount();
+		$this->logger->info("Counting message.");
+		$this->slupRegistrationMgr->incrementRecvCount();
 
-        $this->logger->info("Checking token.");
+		$this->logger->info("Checking token.");
 		$token = strval($request->token);
 		if (!$this->slupRegistrationMgr->isValidToken($token)) {
-            $this->logger->error("SLUP invalid token on message.");
-            // save the currently send token to validate the follow-up disconnect
-            // message that must follow
+			$this->logger->error("SLUP invalid token on message.");
+			// save the currently send token to validate the follow-up disconnect
+			// message that must follow
 			$this->slupRegistrationMgr->setToken($token);
 			// signal invalid token
 			return array('returncode' => 'F003', 'detail' => 'invalid token');
@@ -196,7 +196,7 @@ class SlupApiController extends SoapApiController {
 		try {
 			$this->logger->info("User account modification start");
 			$evalResult = $this->accountRules->deriveAccountState($userName, $displayName, $email, $quota,
-																	$newFieldsClaims, false, self::PROVIDER_PREFIX);
+				$newFieldsClaims, false, self::PROVIDER_PREFIX);
 			$this->logger->info(json_encode($evalResult));
 			if ($evalResult['changed']) {
 				return array('returncode' => '0010', 'detail' => $evalResult['reason']);
@@ -217,7 +217,7 @@ class SlupApiController extends SoapApiController {
 	public function SLUPConnect($request) {
 		$token = strval($request->token);
 		if (!$this->slupRegistrationMgr->isValidToken($token)) {
-            $this->logger->error("SLUP invalid token on connect.");
+			$this->logger->error("SLUP invalid token on connect.");
 			// with this, we get a disconnect next
 			return array('returncode' => 'F003', 'detail' => 'invalid token');
 		}
@@ -239,7 +239,7 @@ class SlupApiController extends SoapApiController {
 		// we should not assume any circuit breaker state here as a parallel
 		// disconnect could happen while processing
 		if (!$this->slupRegistrationMgr->isValidToken($token)) {
-            $this->logger->error("SLUP invalid token on disconnect.");
+			$this->logger->error("SLUP invalid token on disconnect.");
 			// with this, we get a disconnect next
 			return array('returncode' => 'F003', 'detail' => 'invalid token');
 		} else {

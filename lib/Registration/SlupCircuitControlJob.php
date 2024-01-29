@@ -2,10 +2,10 @@
 
 namespace OCA\NextMagentaCloudSlup\Registration;
 
-use OCP\ILogger;
 use OCP\AppFramework\Utility\ITimeFactory;
-
 use OCP\BackgroundJob\TimedJob;
+
+use OCP\ILogger;
 
 class SlupCircuitControlJob extends TimedJob {
 
@@ -16,8 +16,8 @@ class SlupCircuitControlJob extends TimedJob {
 	private $registrationManager;
 
 	public function __construct(ITimeFactory $time,
-								ILogger $logger,
-								SlupRegistrationManager $registrationManager) {
+		ILogger $logger,
+		SlupRegistrationManager $registrationManager) {
 		parent::__construct($time);
 		$this->logger = $logger;
 		$this->registrationManager = $registrationManager;
@@ -61,24 +61,24 @@ class SlupCircuitControlJob extends TimedJob {
 	public function switchCircuit() : bool {
 		if ($this->registrationManager->isCircuitOpen()) {
 			$this->registrationManager->circuitHalfOpen();
-            return true;
+			return true;
 		} else {
-            // the call is needed to prolong the livetime of the
-            // state field in distributed cache until next try.
-            return false;
-        }
+			// the call is needed to prolong the livetime of the
+			// state field in distributed cache until next try.
+			return false;
+		}
 	}
 
 
-    /**
-     * Remember that NextCLoud job intervals are relative 
-     * to the timepoint when app is enabled, so usually, boot
-     * is executed 5min after app enabling
-     */
+	/**
+	 * Remember that NextCLoud job intervals are relative
+	 * to the timepoint when app is enabled, so usually, boot
+	 * is executed 5min after app enabling
+	 */
 	public function run($arguments) {
 		// Method redeclared public for unittest purpose
 		if ($this->connectOnBoot()) {
-            return;
+			return;
 		}
 
 		if ($this->registrationLost()) {
@@ -86,12 +86,12 @@ class SlupCircuitControlJob extends TimedJob {
 		}
 		
 		if ($this->switchCircuit()) {
-            return;
-        }
+			return;
+		}
 
-        // for all positive cases, we refresh the closed
-        // state for the next test cycle
-        $this->registrationManager->circuitClosed();
+		// for all positive cases, we refresh the closed
+		// state for the next test cycle
+		$this->registrationManager->circuitClosed();
 
 	}
 }

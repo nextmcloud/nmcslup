@@ -4,22 +4,22 @@ declare(strict_types=1);
 
 namespace OCA\NextMagentaCloudSlup\UnitTest;
 
-use OCP\IRequest;
-use OCP\ILogger;
-use OCP\IURLGenerator;
-use OCP\IConfig;
-use OCP\ICacheFactory;
-use OCP\Http\Client\IClientService;
-
-
-use OCA\NextMagentaCloudSlup\TestHelper\SoapTestCase;
-use OCA\NextMagentaCloudSlup\AppInfo\Application;
-use OCA\NextMagentaCloudSlup\Registration\SlupRegistrationManager;
-
-use OCA\NextMagentaCloudSlup\Controller\SlupApiController;
-
 use OCA\NextMagentaCloudProvisioning\Rules\TariffRules;
 use OCA\NextMagentaCloudProvisioning\Rules\UserAccountRules;
+use OCA\NextMagentaCloudSlup\AppInfo\Application;
+use OCA\NextMagentaCloudSlup\Controller\SlupApiController;
+use OCA\NextMagentaCloudSlup\Registration\SlupRegistrationManager;
+use OCA\NextMagentaCloudSlup\TestHelper\SoapTestCase;
+
+
+use OCP\Http\Client\IClientService;
+use OCP\ICacheFactory;
+use OCP\IConfig;
+
+use OCP\ILogger;
+
+use OCP\IRequest;
+use OCP\IURLGenerator;
 
 class Slup31ReceiverToCircuitBreakerTest extends SoapTestCase {
 
@@ -32,12 +32,12 @@ class Slup31ReceiverToCircuitBreakerTest extends SoapTestCase {
 		parent::setUp();
 		$app = new \OCP\AppFramework\App(Application::APP_ID);
 		$this->config = $this->getMockForAbstractClass(IConfig::class);
-        $this->config->expects($this->at(0))
-                    ->method("getAppValue")
-                    ->with($this->equalTo('nmcslup'), $this->equalTo('slupcontrolintv'))
-                    ->willReturn('300');
+		$this->config->expects($this->at(0))
+					->method("getAppValue")
+					->with($this->equalTo('nmcslup'), $this->equalTo('slupcontrolintv'))
+					->willReturn('300');
 
-		$this->urlGenerator = $app->getContainer()->get(IURLGenerator::class);	
+		$this->urlGenerator = $app->getContainer()->get(IURLGenerator::class);
 		$this->registrationManager = $this->getMockBuilder(SlupRegistrationManager::class)
 										->onlyMethods(['sendRegistration'])
 										->setConstructorArgs([ $app->getContainer()->get(ILogger::class),
@@ -51,11 +51,11 @@ class Slup31ReceiverToCircuitBreakerTest extends SoapTestCase {
 
 		$this->accountRulesMock = $this->createMock(UserAccountRules::class);
 		$this->slupController = new SlupApiController(Application::APP_ID,
-													$app->getContainer()->get(IRequest::class),
-													$app->getContainer()->get(ILogger::class),
-													$this->registrationManager,
-													$app->getContainer()->get(TariffRules::class),
-													$this->accountRulesMock);
+			$app->getContainer()->get(IRequest::class),
+			$app->getContainer()->get(ILogger::class),
+			$this->registrationManager,
+			$app->getContainer()->get(TariffRules::class),
+			$this->accountRulesMock);
 		$this->startServer($this->slupController, $this->slupController->getWsdlPath());
 	}
 
@@ -131,7 +131,7 @@ class Slup31ReceiverToCircuitBreakerTest extends SoapTestCase {
 		$this->registrationManager->circuitOpen();
 		$this->assertFalse($this->registrationManager->hasToken());
 		$this->assertEquals(SlupRegistrationManager::CIRCUIT_OPEN,
-							$this->registrationManager->circuitState());
+			$this->registrationManager->circuitState());
 		$this->assertTrue($this->registrationManager->isCircuitOpen());
 		$this->assertFalse($this->registrationManager->isCircuitHalfOpen());
 		$this->assertFalse($this->registrationManager->isCircuitClosed());
@@ -142,10 +142,10 @@ class Slup31ReceiverToCircuitBreakerTest extends SoapTestCase {
 
 	public function testInvalidTokenOnClosed() {
 		$this->registrationManager->setToken('1122334455');
-        $this->registrationManager->circuitClosed();
+		$this->registrationManager->circuitClosed();
 		$this->assertTrue($this->registrationManager->hasToken());
 		$this->assertEquals(SlupRegistrationManager::CIRCUIT_CLOSED,
-							$this->registrationManager->circuitState());
+			$this->registrationManager->circuitState());
 		$this->assertFalse($this->registrationManager->isCircuitOpen());
 		$this->assertFalse($this->registrationManager->isCircuitHalfOpen());
 		$this->assertTrue($this->registrationManager->isCircuitClosed());
@@ -155,18 +155,18 @@ class Slup31ReceiverToCircuitBreakerTest extends SoapTestCase {
 	}
 
 	public function testValidTokenOnClosed() {
-        $this->accountRulesMock->expects($this->once())
-                                ->method('deriveAccountState')
-                                ->with($this->equalTo('120049010000000000590615'), $this->equalTo('Christa.Haller4'), 
-                                        $this->equalTo('Christa.Haller4@ver.sul.t-online.de'), $this->isNull(), 
-                                        $this->isType('string'))
-                                ->willReturn( ['allowed' => true, 'reason' => 'Updated', 'changed' => true ] );
+		$this->accountRulesMock->expects($this->once())
+								->method('deriveAccountState')
+								->with($this->equalTo('120049010000000000590615'), $this->equalTo('Christa.Haller4'),
+									$this->equalTo('Christa.Haller4@ver.sul.t-online.de'), $this->isNull(),
+									$this->isType('string'))
+								->willReturn(['allowed' => true, 'reason' => 'Updated', 'changed' => true ]);
 
 		$this->registrationManager->setToken('269421944');
 		$this->registrationManager->circuitClosed();
 		$this->assertTrue($this->registrationManager->hasToken());
 		$this->assertEquals(SlupRegistrationManager::CIRCUIT_CLOSED,
-							$this->registrationManager->circuitState());
+			$this->registrationManager->circuitState());
 		$this->assertFalse($this->registrationManager->isCircuitOpen());
 		$this->assertFalse($this->registrationManager->isCircuitHalfOpen());
 		$this->assertTrue($this->registrationManager->isCircuitClosed());
@@ -195,7 +195,7 @@ class Slup31ReceiverToCircuitBreakerTest extends SoapTestCase {
 		$this->registrationManager->circuitOpen();
 		$this->assertFalse($this->registrationManager->hasToken());
 		$this->assertEquals(SlupRegistrationManager::CIRCUIT_OPEN,
-							$this->registrationManager->circuitState());
+			$this->registrationManager->circuitState());
 		$this->assertTrue($this->registrationManager->isCircuitOpen());
 		$this->assertFalse($this->registrationManager->isCircuitHalfOpen());
 		$this->assertFalse($this->registrationManager->isCircuitClosed());
@@ -205,11 +205,11 @@ class Slup31ReceiverToCircuitBreakerTest extends SoapTestCase {
 	}
 	
 	public function testValidConnectTokenOnClosed() {
-        $this->registrationManager->setToken('269421944');
-        $this->registrationManager->circuitClosed();
+		$this->registrationManager->setToken('269421944');
+		$this->registrationManager->circuitClosed();
 		$this->assertTrue($this->registrationManager->hasToken());
 		$this->assertEquals(SlupRegistrationManager::CIRCUIT_CLOSED,
-							$this->registrationManager->circuitState());
+			$this->registrationManager->circuitState());
 		$this->assertFalse($this->registrationManager->isCircuitOpen());
 		$this->assertFalse($this->registrationManager->isCircuitHalfOpen());
 		$this->assertTrue($this->registrationManager->isCircuitClosed());
@@ -219,11 +219,11 @@ class Slup31ReceiverToCircuitBreakerTest extends SoapTestCase {
 	}
 
 	public function testInvalidConnectTokenOnClosed() {
-        $this->registrationManager->setToken('1122334455');
+		$this->registrationManager->setToken('1122334455');
 		$this->registrationManager->circuitClosed();
 		$this->assertTrue($this->registrationManager->hasToken());
 		$this->assertEquals(SlupRegistrationManager::CIRCUIT_CLOSED,
-							$this->registrationManager->circuitState());
+			$this->registrationManager->circuitState());
 		$this->assertFalse($this->registrationManager->isCircuitOpen());
 		$this->assertFalse($this->registrationManager->isCircuitHalfOpen());
 		$this->assertTrue($this->registrationManager->isCircuitClosed());
@@ -248,11 +248,11 @@ class Slup31ReceiverToCircuitBreakerTest extends SoapTestCase {
 
 
 	public function testInvalidDisconnectTokenOnOpen() {
-        $this->registrationManager->clearToken();
+		$this->registrationManager->clearToken();
 		$this->registrationManager->circuitOpen();
 		$this->assertFalse($this->registrationManager->hasToken());
 		$this->assertEquals(SlupRegistrationManager::CIRCUIT_OPEN,
-							$this->registrationManager->circuitState());
+			$this->registrationManager->circuitState());
 		$this->assertTrue($this->registrationManager->isCircuitOpen());
 		$this->assertFalse($this->registrationManager->isCircuitHalfOpen());
 		$this->assertFalse($this->registrationManager->isCircuitClosed());
@@ -262,8 +262,8 @@ class Slup31ReceiverToCircuitBreakerTest extends SoapTestCase {
 	}
 
 	public function testInvalidDisconnectTokenOnClosed() {
-        $this->registrationManager->setToken('1122334455');
-        $this->registrationManager->circuitClosed();
+		$this->registrationManager->setToken('1122334455');
+		$this->registrationManager->circuitClosed();
 		$this->assertTrue($this->registrationManager->hasToken());
 		$this->assertEquals(SlupRegistrationManager::CIRCUIT_CLOSED,
 			$this->registrationManager->circuitState());
@@ -275,18 +275,18 @@ class Slup31ReceiverToCircuitBreakerTest extends SoapTestCase {
 		$this->assertSlupResponse("F003", $result, "invalid token");
 		$this->assertTrue($this->registrationManager->hasToken());
 		$this->assertEquals(SlupRegistrationManager::CIRCUIT_CLOSED,
-							$this->registrationManager->circuitState());
+			$this->registrationManager->circuitState());
 		$this->assertFalse($this->registrationManager->isCircuitOpen());
 		$this->assertFalse($this->registrationManager->isCircuitHalfOpen());
 		$this->assertTrue($this->registrationManager->isCircuitClosed());
 	}
 
 	public function testDisconnectCircuitOpened() {
-        $this->registrationManager->setToken('269421944');
+		$this->registrationManager->setToken('269421944');
 		$this->registrationManager->circuitClosed();
 		$this->assertTrue($this->registrationManager->hasToken());
 		$this->assertEquals(SlupRegistrationManager::CIRCUIT_CLOSED,
-							$this->registrationManager->circuitState());
+			$this->registrationManager->circuitState());
 		$this->assertFalse($this->registrationManager->isCircuitOpen());
 		$this->assertFalse($this->registrationManager->isCircuitHalfOpen());
 		$this->assertTrue($this->registrationManager->isCircuitClosed());
@@ -295,7 +295,7 @@ class Slup31ReceiverToCircuitBreakerTest extends SoapTestCase {
 		$this->assertSlupResponse("0000", $result, "disconnected");
 		$this->assertFalse($this->registrationManager->hasToken());
 		$this->assertEquals(SlupRegistrationManager::CIRCUIT_OPEN,
-							$this->registrationManager->circuitState());
+			$this->registrationManager->circuitState());
 		$this->assertTrue($this->registrationManager->isCircuitOpen());
 		$this->assertFalse($this->registrationManager->isCircuitHalfOpen());
 		$this->assertFalse($this->registrationManager->isCircuitClosed());
@@ -303,20 +303,20 @@ class Slup31ReceiverToCircuitBreakerTest extends SoapTestCase {
 
 
 	public function testAlreadyConnectedA007ForcedDisconnect() {
-        $detail = new \stdClass;
+		$detail = new \stdClass;
 		$detail->FaultResponse = new \stdClass;
 		$detail->FaultResponse->code = 'A007';
 		$detail->FaultResponse->message = 'lockfile exists';
-        $this->registrationManager->expects($this->once())
-                            ->method('sendRegistration')
-                            ->will($this->throwException(new \SoapFault('SOAP-ENV:Server', 
-                                                        'Application error', null, $detail)));
+		$this->registrationManager->expects($this->once())
+							->method('sendRegistration')
+							->will($this->throwException(new \SoapFault('SOAP-ENV:Server',
+								'Application error', null, $detail)));
 
-        $this->registrationManager->setToken('1122334455');
-        $this->registrationManager->circuitHalfOpen();
+		$this->registrationManager->setToken('1122334455');
+		$this->registrationManager->circuitHalfOpen();
 		$this->assertTrue($this->registrationManager->hasToken());
 		$this->assertEquals(SlupRegistrationManager::CIRCUIT_CLOSED,
-							$this->registrationManager->circuitState());
+			$this->registrationManager->circuitState());
 		$this->assertFalse($this->registrationManager->isCircuitOpen());
 		$this->assertFalse($this->registrationManager->isCircuitHalfOpen());
 		$this->assertTrue($this->registrationManager->isCircuitClosed());
@@ -329,7 +329,7 @@ class Slup31ReceiverToCircuitBreakerTest extends SoapTestCase {
 		// surprisingly, the reconnect already assumes normal operation
 		// so it is executed in closed state
 		$this->assertEquals(SlupRegistrationManager::CIRCUIT_CLOSED,
-							$this->registrationManager->circuitState());
+			$this->registrationManager->circuitState());
 		$this->assertFalse($this->registrationManager->isCircuitOpen());
 		$this->assertFalse($this->registrationManager->isCircuitHalfOpen());
 		$this->assertTrue($this->registrationManager->isCircuitClosed());
@@ -340,7 +340,7 @@ class Slup31ReceiverToCircuitBreakerTest extends SoapTestCase {
 		$this->assertSlupResponse("0000", $result, "disconnected");
 		$this->assertFalse($this->registrationManager->hasToken());
 		$this->assertEquals(SlupRegistrationManager::CIRCUIT_OPEN,
-							$this->registrationManager->circuitState());
+			$this->registrationManager->circuitState());
 		$this->assertTrue($this->registrationManager->isCircuitOpen());
 		$this->assertFalse($this->registrationManager->isCircuitHalfOpen());
 		$this->assertFalse($this->registrationManager->isCircuitClosed());

@@ -40,9 +40,9 @@ class SoapTestCase extends TestCase {
 	protected function assertSlupResponseMessage($parsedResult) {
 		$isSlupResponse = $parsedResult->xpath("//e:Envelope/e:Body/s:SLUPResponse|s:SLUPConnectResponse|s:SLUPDisconnectResponse");
 		$this->assertNotFalse($isSlupResponse,
-		 "Not a slup response message:" . PHP_EOL . strval($parsedResult->asXML()));
+			"Not a slup response message:" . PHP_EOL . strval($parsedResult->asXML()));
 		$this->assertNotNull($isSlupResponse,
-		 "Not a slup response message:" . PHP_EOL . strval($parsedResult->asXML()));
+			"Not a slup response message:" . PHP_EOL . strval($parsedResult->asXML()));
 	}
 
 	/**

@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace OCA\NextMagentaCloudSlup\AppInfo;
 
-use OCP\ILogger;
 use OCP\App\IAppManager;
 use OCP\AppFramework\App;
-
-use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\AppFramework\Bootstrap\IBootContext;
-use OCP\AppFramework\Bootstrap\IBootstrap;
 
+use OCP\AppFramework\Bootstrap\IBootstrap;
+use OCP\AppFramework\Bootstrap\IRegistrationContext;
+use OCP\ILogger;
 
 class Application extends App implements IBootstrap {
 	public const APP_ID = 'nmcslup';
@@ -31,12 +30,12 @@ class Application extends App implements IBootstrap {
 	 * so we cannot use it for SLUP registration on boot
 	 */
 	public function boot(IBootContext $context): void {
-        $appMgr = $this->getContainer()->get(IAppManager::class);
-        $logger = $this->getContainer()->get(ILogger::class);
-        if ( !$appMgr->isInstalled('nmcprovisioning') ) {
-            $logger->error("NmcProvisioning app not installed or enabled, but NmcSlup depends on it!");
-        }
+		$appMgr = $this->getContainer()->get(IAppManager::class);
+		$logger = $this->getContainer()->get(ILogger::class);
+		if (!$appMgr->isInstalled('nmcprovisioning')) {
+			$logger->error("NmcProvisioning app not installed or enabled, but NmcSlup depends on it!");
+		}
 
-        // TODO: may check also for minimal version of dependent app
-    }
+		// TODO: may check also for minimal version of dependent app
+	}
 }

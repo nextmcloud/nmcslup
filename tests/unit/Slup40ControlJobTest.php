@@ -4,24 +4,24 @@ declare(strict_types=1);
 
 namespace OCA\NextMagentaCloudSlup\UnitTest;
 
-use OCP\IRequest;
-use OCP\ILogger;
-use OCP\IURLGenerator;
-use OCP\IConfig;
-use OCP\ICacheFactory;
-use OCP\AppFramework\Utility\ITimeFactory;
-use OCP\Http\Client\IClientService;
-
-
-use OCA\NextMagentaCloudSlup\TestHelper\SoapTestCase;
-use OCA\NextMagentaCloudSlup\AppInfo\Application;
-use OCA\NextMagentaCloudSlup\Registration\SlupRegistrationManager;
-use OCA\NextMagentaCloudSlup\Controller\SlupApiController;
-
 use OCA\NextMagentaCloudProvisioning\Rules\TariffRules;
 use OCA\NextMagentaCloudProvisioning\Rules\UserAccountRules;
-
+use OCA\NextMagentaCloudSlup\AppInfo\Application;
+use OCA\NextMagentaCloudSlup\Controller\SlupApiController;
 use OCA\NextMagentaCloudSlup\Registration\SlupCircuitControlJob;
+use OCA\NextMagentaCloudSlup\Registration\SlupRegistrationManager;
+use OCA\NextMagentaCloudSlup\TestHelper\SoapTestCase;
+
+
+use OCP\AppFramework\Utility\ITimeFactory;
+use OCP\Http\Client\IClientService;
+use OCP\ICacheFactory;
+use OCP\IConfig;
+
+use OCP\ILogger;
+use OCP\IRequest;
+
+use OCP\IURLGenerator;
 
 class Slup40ControlJobTest extends SoapTestCase {
 
@@ -54,11 +54,11 @@ class Slup40ControlJobTest extends SoapTestCase {
 
 		$this->accountRulesMock = $this->createMock(UserAccountRules::class);
 		$this->slupController = new SlupApiController(Application::APP_ID,
-													$app->getContainer()->get(IRequest::class),
-													$app->getContainer()->get(ILogger::class),
-													$this->registrationManager,
-													$app->getContainer()->get(TariffRules::class),
-													$this->accountRulesMock);
+			$app->getContainer()->get(IRequest::class),
+			$app->getContainer()->get(ILogger::class),
+			$this->registrationManager,
+			$app->getContainer()->get(TariffRules::class),
+			$this->accountRulesMock);
 		$this->startServer($this->slupController, $this->slupController->getWsdlPath());
 		
 		$this->app = $app;
@@ -103,13 +103,13 @@ class Slup40ControlJobTest extends SoapTestCase {
 					->method("getAppValue")
 					->with($this->equalTo('nmcslup'), $this->equalTo('slupgwendpoint'))
 					->willReturn('https://slup2soap00.idm.ver.sul.t-online.de/slupService/');
-        $this->registrationManager->expects($this->once())
-                    ->method('sendRegistration')
-                    ->with($this->equalTo('https://slup2soap00.idm.ver.sul.t-online.de/slupService/'),
-                            $this->equalTo('10TVL0SLUP0000004901NEXTMAGENTACLOUD0000'),
-                            $this->equalTo('<secret>'))
-                    ->willReturn('0987654321');
-        return $this->createControlJob()->run(null);
+		$this->registrationManager->expects($this->once())
+					->method('sendRegistration')
+					->with($this->equalTo('https://slup2soap00.idm.ver.sul.t-online.de/slupService/'),
+						$this->equalTo('10TVL0SLUP0000004901NEXTMAGENTACLOUD0000'),
+						$this->equalTo('<secret>'))
+					->willReturn('0987654321');
+		return $this->createControlJob()->run(null);
 	}
 
 	protected function runControlJobToOpen() {
@@ -125,13 +125,13 @@ class Slup40ControlJobTest extends SoapTestCase {
 					->method("getAppValue")
 					->with($this->equalTo('nmcslup'), $this->equalTo('slupgwendpoint'))
 					->willReturn('https://slup2soap00.idm.ver.sul.t-online.de/slupService/');
-        $this->registrationManager->expects($this->once())
-                    ->method('sendRegistration')
-                    ->with($this->equalTo('https://slup2soap00.idm.ver.sul.t-online.de/slupService/'),
-                            $this->equalTo('10TVL0SLUP0000004901NEXTMAGENTACLOUD0000'),
-                            $this->equalTo('<secret>'))
-                    ->willThrowException(new \Exception());
-        return $this->createControlJob()->run(null);
+		$this->registrationManager->expects($this->once())
+					->method('sendRegistration')
+					->with($this->equalTo('https://slup2soap00.idm.ver.sul.t-online.de/slupService/'),
+						$this->equalTo('10TVL0SLUP0000004901NEXTMAGENTACLOUD0000'),
+						$this->equalTo('<secret>'))
+					->willThrowException(new \Exception());
+		return $this->createControlJob()->run(null);
 	}
 
 
@@ -151,8 +151,8 @@ class Slup40ControlJobTest extends SoapTestCase {
 		$this->registrationManager->expects($this->once())
 								->method('sendRegistration')
 								->with($this->equalTo('https://slup2soap00.idm.ver.sul.t-online.de/slupService/'),
-										$this->equalTo('10TVL0SLUP0000004901NEXTMAGENTACLOUD0000'),
-										$this->equalTo('<secret>'))
+									$this->equalTo('10TVL0SLUP0000004901NEXTMAGENTACLOUD0000'),
+									$this->equalTo('<secret>'))
 								->willThrowException(new \Exception());
 		$this->registrationManager->forceCircuitUndefined();
 		$this->registrationManager->resetRecvCount();
@@ -193,8 +193,8 @@ class Slup40ControlJobTest extends SoapTestCase {
 		$this->registrationManager->expects($this->once())
 								->method('sendRegistration')
 								->with($this->equalTo('https://slup2soap00.idm.ver.sul.t-online.de/slupService/'),
-										$this->equalTo('10TVL0SLUP0000004901NEXTMAGENTACLOUD0000'),
-										$this->equalTo('<secret>'))
+									$this->equalTo('10TVL0SLUP0000004901NEXTMAGENTACLOUD0000'),
+									$this->equalTo('<secret>'))
 								->willThrowException(new \Exception());
 
 		$this->registrationManager->circuitClosed();
@@ -247,8 +247,8 @@ class Slup40ControlJobTest extends SoapTestCase {
 		$this->registrationManager->expects($this->once())
 								->method('sendRegistration')
 								->with($this->equalTo('https://slup2soap00.idm.ver.sul.t-online.de/slupService/'),
-										$this->equalTo('10TVL0SLUP0000004901NEXTMAGENTACLOUD0000'),
-										$this->equalTo('<secret>'))
+									$this->equalTo('10TVL0SLUP0000004901NEXTMAGENTACLOUD0000'),
+									$this->equalTo('<secret>'))
 								->willThrowException(new \Exception());
 
 		$this->registrationManager->circuitOpen();
@@ -274,8 +274,8 @@ class Slup40ControlJobTest extends SoapTestCase {
 		$this->registrationManager->expects($this->once())
 								->method('sendRegistration')
 								->with($this->equalTo('https://slup2soap00.idm.ver.sul.t-online.de/slupService/'),
-										$this->equalTo('10TVL0SLUP0000004901NEXTMAGENTACLOUD0000'),
-										$this->equalTo('<secret>'))
+									$this->equalTo('10TVL0SLUP0000004901NEXTMAGENTACLOUD0000'),
+									$this->equalTo('<secret>'))
 								->willReturn('0987654321');
 
 		$this->registrationManager->circuitOpen();
@@ -332,7 +332,7 @@ class Slup40ControlJobTest extends SoapTestCase {
 	}
 
 
-    public function testJobDetectNormalOps() {
+	public function testJobDetectNormalOps() {
 		$this->config->expects($this->at(0))
 					->method("getAppValue")
 					->with($this->equalTo('nmcslup'), $this->equalTo('slupcontrolintv'))
@@ -346,25 +346,25 @@ class Slup40ControlJobTest extends SoapTestCase {
 											$this->app->getContainer()->get(ICacheFactory::class) ])
 										->getMock();
 
-        $this->registrationManager->expects($this->never())
-                            ->method('circuitHalfOpen');
+		$this->registrationManager->expects($this->never())
+							->method('circuitHalfOpen');
 
-        // set state open, assert job creation
+		// set state open, assert job creation
 		$job = $this->createControlJob();
 
-        $this->registrationManager->circuitClosed();
-        $this->registrationManager->setToken('0123456789');
-        $this->registrationManager->resetRecvCount();
-        $this->registrationManager->incrementRecvCount();
-        $this->registrationManager->incrementRecvCount();
-        $this->registrationManager->incrementRecvCount();
-        $job->run(null);
-        $this->assertTrue($this->registrationManager->isValidToken('0123456789'));
-        $this->assertEquals(0, $this->registrationManager->getRecvCount());
+		$this->registrationManager->circuitClosed();
+		$this->registrationManager->setToken('0123456789');
+		$this->registrationManager->resetRecvCount();
+		$this->registrationManager->incrementRecvCount();
+		$this->registrationManager->incrementRecvCount();
+		$this->registrationManager->incrementRecvCount();
+		$job->run(null);
+		$this->assertTrue($this->registrationManager->isValidToken('0123456789'));
+		$this->assertEquals(0, $this->registrationManager->getRecvCount());
 		$this->assertTrue($this->registrationManager->isCircuitClosed());
-    }
+	}
 
-    public function testJobDetectNoMessages() {
+	public function testJobDetectNoMessages() {
 		$this->config->expects($this->at(0))
 					->method("getAppValue")
 					->with($this->equalTo('nmcslup'), $this->equalTo('slupcontrolintv'))
@@ -378,20 +378,20 @@ class Slup40ControlJobTest extends SoapTestCase {
 											$this->app->getContainer()->get(ICacheFactory::class) ])
 										->getMock();
 
-        $this->registrationManager->expects($this->once())
-                            ->method('circuitHalfOpen');
+		$this->registrationManager->expects($this->once())
+							->method('circuitHalfOpen');
 
-        // set state open, assert job creation
+		// set state open, assert job creation
 		$job = $this->createControlJob();
 
-        $this->registrationManager->circuitClosed();
-        $this->registrationManager->setToken('0123456789');
-        $this->registrationManager->resetRecvCount();
-        $job->run(null);
-        $this->assertEquals(0, $this->registrationManager->getRecvCount());
-    }
+		$this->registrationManager->circuitClosed();
+		$this->registrationManager->setToken('0123456789');
+		$this->registrationManager->resetRecvCount();
+		$job->run(null);
+		$this->assertEquals(0, $this->registrationManager->getRecvCount());
+	}
 
-    public function testJobDetectA007ClosedKeepToken() {
+	public function testJobDetectA007ClosedKeepToken() {
 		$this->config->expects($this->at(0))
 					->method("getAppValue")
 					->with($this->equalTo('nmcslup'), $this->equalTo('slupcontrolintv'))
@@ -405,28 +405,28 @@ class Slup40ControlJobTest extends SoapTestCase {
 											$this->app->getContainer()->get(ICacheFactory::class)])
 										->getMock();
 
-        $detail = new \stdClass;
+		$detail = new \stdClass;
 		$detail->FaultResponse = new \stdClass;
 		$detail->FaultResponse->code = 'A007';
 		$detail->FaultResponse->message = 'lockfile exists';
-        $this->registrationManager->expects($this->once())
-                            ->method('sendRegistration')
-                            ->willThrowException(new \SoapFault('SOAP-ENV:Server', 
-                                                        'Application error', null, $detail));
+		$this->registrationManager->expects($this->once())
+							->method('sendRegistration')
+							->willThrowException(new \SoapFault('SOAP-ENV:Server',
+								'Application error', null, $detail));
 
-        // set state open, assert job creation
+		// set state open, assert job creation
 		$job = $this->createControlJob();
 
-        $this->registrationManager->circuitClosed();
-        $this->registrationManager->setToken('1122334455');
-        $this->registrationManager->resetRecvCount();
-        $job->run(null);
-        $this->assertTrue($this->registrationManager->isCircuitClosed());
-        $this->assertTrue($this->registrationManager->isValidToken('1122334455'));
-        $this->assertEquals(0, $this->registrationManager->getRecvCount());
-    }
+		$this->registrationManager->circuitClosed();
+		$this->registrationManager->setToken('1122334455');
+		$this->registrationManager->resetRecvCount();
+		$job->run(null);
+		$this->assertTrue($this->registrationManager->isCircuitClosed());
+		$this->assertTrue($this->registrationManager->isValidToken('1122334455'));
+		$this->assertEquals(0, $this->registrationManager->getRecvCount());
+	}
 
-    public function testJobDetectClosedNewToken() {
+	public function testJobDetectClosedNewToken() {
 		$this->config->expects($this->at(0))
 					->method("getAppValue")
 					->with($this->equalTo('nmcslup'), $this->equalTo('slupcontrolintv'))
@@ -440,28 +440,28 @@ class Slup40ControlJobTest extends SoapTestCase {
 											$this->app->getContainer()->get(ICacheFactory::class)])
 										->getMock();
 
-        $detail = new \stdClass;
+		$detail = new \stdClass;
 		$detail->FaultResponse = new \stdClass;
 		$detail->FaultResponse->code = 'A007';
 		$detail->FaultResponse->message = 'lockfile exists';
-        $this->registrationManager->expects($this->once())
-                            ->method('sendRegistration')
-                            ->willReturn('1234567890');
+		$this->registrationManager->expects($this->once())
+							->method('sendRegistration')
+							->willReturn('1234567890');
 
-        // set state open, assert job creation
+		// set state open, assert job creation
 		$job = $this->createControlJob();
 
-        $this->registrationManager->circuitClosed();
-        $this->registrationManager->setToken('1122334455');
-        $this->registrationManager->resetRecvCount();
-        $job->run(null);
-        $this->assertTrue($this->registrationManager->isCircuitClosed());
-        $this->assertFalse($this->registrationManager->isValidToken('1122334455'));
-        $this->assertTrue($this->registrationManager->isValidToken('1234567890'));
-        $this->assertEquals(0, $this->registrationManager->getRecvCount());
-    }
+		$this->registrationManager->circuitClosed();
+		$this->registrationManager->setToken('1122334455');
+		$this->registrationManager->resetRecvCount();
+		$job->run(null);
+		$this->assertTrue($this->registrationManager->isCircuitClosed());
+		$this->assertFalse($this->registrationManager->isValidToken('1122334455'));
+		$this->assertTrue($this->registrationManager->isValidToken('1234567890'));
+		$this->assertEquals(0, $this->registrationManager->getRecvCount());
+	}
 
-    public function testJobDetectOpen() {
+	public function testJobDetectOpen() {
 		$this->config->expects($this->at(0))
 					->method("getAppValue")
 					->with($this->equalTo('nmcslup'), $this->equalTo('slupcontrolintv'))
@@ -475,30 +475,30 @@ class Slup40ControlJobTest extends SoapTestCase {
 											$this->app->getContainer()->get(ICacheFactory::class) ])
 										->getMock();
 
-        $this->registrationManager->expects($this->at(0))
-                            ->method('sendRegistration')
-                            ->will($this->throwException(new \SoapFault('SOAP:Server', 
-                                                        'Unauthorized client')));
+		$this->registrationManager->expects($this->at(0))
+							->method('sendRegistration')
+							->will($this->throwException(new \SoapFault('SOAP:Server',
+								'Unauthorized client')));
 
 
-        // set state open, assert job creation
+		// set state open, assert job creation
 		$job = $this->createControlJob();
 
-        $this->registrationManager->circuitClosed();
-        $this->registrationManager->setToken('1122334455');
-        $this->registrationManager->resetRecvCount();
-        $job->run(null);
-        $this->assertTrue($this->registrationManager->isCircuitOpen());
-        $this->assertFalse($this->registrationManager->isValidToken('1122334455'));
-        $this->assertFalse($this->registrationManager->isValidToken('1234567890'));
-        $this->assertEquals(0, $this->registrationManager->getRecvCount());
-    }
+		$this->registrationManager->circuitClosed();
+		$this->registrationManager->setToken('1122334455');
+		$this->registrationManager->resetRecvCount();
+		$job->run(null);
+		$this->assertTrue($this->registrationManager->isCircuitOpen());
+		$this->assertFalse($this->registrationManager->isValidToken('1122334455'));
+		$this->assertFalse($this->registrationManager->isValidToken('1234567890'));
+		$this->assertEquals(0, $this->registrationManager->getRecvCount());
+	}
 
-    /**
-     * 
-     * @large
-     */
-    public function testJobDetectA007SecondTryClosedKeepToken() {
+	/**
+	 *
+	 * @large
+	 */
+	public function testJobDetectA007SecondTryClosedKeepToken() {
 		$this->config->expects($this->at(0))
 					->method("getAppValue")
 					->with($this->equalTo('nmcslup'), $this->equalTo('slupcontrolintv'))
@@ -512,31 +512,31 @@ class Slup40ControlJobTest extends SoapTestCase {
 											$this->app->getContainer()->get(ICacheFactory::class)])
 										->getMock();
 
-        $this->registrationManager->expects($this->at(0))
-                            ->method('sendRegistration')
-                            ->will($this->throwException(new \SoapFault('HTTP', 
-                                                        'No connection')));
-        $detail = new \stdClass;
-        $detail->FaultResponse = new \stdClass;
+		$this->registrationManager->expects($this->at(0))
+							->method('sendRegistration')
+							->will($this->throwException(new \SoapFault('HTTP',
+								'No connection')));
+		$detail = new \stdClass;
+		$detail->FaultResponse = new \stdClass;
 		$detail->FaultResponse->code = 'A007';
 		$detail->FaultResponse->message = 'lockfile exists';
-        $this->registrationManager->expects($this->at(1))
-                            ->method('sendRegistration')
-                            ->will($this->throwException(new \SoapFault('SOAP-ENV:Server', 
-                                                        'Application error', null, $detail)));
+		$this->registrationManager->expects($this->at(1))
+							->method('sendRegistration')
+							->will($this->throwException(new \SoapFault('SOAP-ENV:Server',
+								'Application error', null, $detail)));
 
 
-        // set state open, assert job creation
+		// set state open, assert job creation
 		$job = $this->createControlJob();
 
-        $this->registrationManager->circuitClosed();
-        $this->registrationManager->setToken('1122334455');
-        $this->registrationManager->resetRecvCount();
-        $job->run(null);
-        $this->assertTrue($this->registrationManager->isCircuitClosed());
-        $this->assertTrue($this->registrationManager->isValidToken('1122334455'));
-        $this->assertFalse($this->registrationManager->isValidToken('1234567890'));
-        $this->assertEquals(0, $this->registrationManager->getRecvCount());
-    }
+		$this->registrationManager->circuitClosed();
+		$this->registrationManager->setToken('1122334455');
+		$this->registrationManager->resetRecvCount();
+		$job->run(null);
+		$this->assertTrue($this->registrationManager->isCircuitClosed());
+		$this->assertTrue($this->registrationManager->isValidToken('1122334455'));
+		$this->assertFalse($this->registrationManager->isValidToken('1234567890'));
+		$this->assertEquals(0, $this->registrationManager->getRecvCount());
+	}
 
 }
