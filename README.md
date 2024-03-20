@@ -2,12 +2,14 @@
 
 ## App configuration
 
-|App parameter                | Purpose                                                                               |
-|-----------------------------|---------------------------------------------------------------------------------------|
-|nmcslup slupid               | slup application id to use for registration                                           |
-|nmcslup slupsecret           | slup secret to use for registration                                                   |
-|nmcslup slupgwendpoint       | Webservice endpoint URL for SLUP gateway                                              |
-|nmcslup slupcontrolintv      | (optional override, int) interval to OPEN after boot other than 300 (sec)             |
+|App parameter                | Purpose                                                                                                     |
+|-----------------------------|-------------------------------------------------------------------------------------------------------------|
+|nmcslup slupid               | slup application id to use for registration                                                                 |
+|nmcslup slupsecret           | slup secret to use for registration                                                                         |
+|nmcslup slupgwendpoint       | Webservice endpoint URL for SLUP gateway                                                                    |
+|nmcslup slupcontrolintv      | (optional override, int) interval to OPEN after boot other than 300 (sec)                                   |
+|nmcslup local_cert           | local path to a client certificate for use with SLUP requester authentication                               |
+|nmcslup local_key            | local path to a private key file in case of separate files for certificate (local_cert) and private key     |
 
 Remember that NextCloud app configuration values only support string, so 300sec is '300'.
 
@@ -17,6 +19,8 @@ sudo -u www-data php /var/www/nextcloud/occ config:app:set nmcslup slupid --valu
 sudo -u www-data php /var/www/nextcloud/occ config:app:set nmcslup slupsecret --value <secret value delivered by slup partner>
 sudo -u www-data php /var/www/nextcloud/occ config:app:set nmcslup slupgwendpoint --value <value delivered by slup partner>
 sudo -u www-data php /var/www/nextcloud/occ config:app:set nmcslup slupcontrolintv --value 123
+sudo -u www-data php /var/www/nextcloud/occ config:app:set nmcslup local_cert --value <set value to local path where file is stored>
+sudo -u www-data php /var/www/nextcloud/occ config:app:set nmcslup local_key --value <set value to local path where file is stored>
 ```
 
 ## Getting API status by API
