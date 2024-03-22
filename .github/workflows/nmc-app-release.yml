@@ -27,6 +27,7 @@ on:
           - stable26
           - stable27
           - stable28
+          - nmc/slup-mtls
       increment:
         description: 'Release increment'
         required: true
