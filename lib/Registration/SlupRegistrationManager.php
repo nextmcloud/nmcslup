@@ -52,11 +52,8 @@ class SlupRegistrationManager {
 	/** local location of wsdl file */
 	protected $wsdlPath;
 
-	/** local path to a client certificate for use with HTTPS authentication */
+	/** local path to a client certificate for use with HTTPS authentication. It must be a PEM encoded file which contains your certificate and private key. */
 	protected $localCert;
-
-	/** local path to a private key file in case of separate files for certificate (local_cert) and private key */
-	protected $localKey;
 
 	/** @var bool */
 	protected $forceDisconnect = false;
@@ -85,7 +82,6 @@ class SlupRegistrationManager {
 
 		$this->wsdlPath = dirname(__FILE__) . "/slupService.wsdl";
 		$this->localCert = $this->config->getAppValue('nmcslup', 'local_cert', dirname(__FILE__) . '/cert.pem');
-		$this->localKey = $this->config->getAppValue('nmcslup', 'local_key', dirname(__FILE__) . '/key.pem');
 
 		// in a scaled cluster, it is not a good idea to depend on
 		// a shutdown procedure as you have to find out when last cluster
@@ -366,16 +362,12 @@ class SlupRegistrationManager {
 					return $system;
 				});
 
-				$stream_context = stream_context_create([ 'ssl' => [
-					'local_cert' => $this->localCert,
-					'local_key' => $this->localKey ]]);
-
 				$soapClient = new SoapClient($this->wsdlPath, array('connection_timeout' => 20, // limit response time to 20sec
 					'cache_wsdl' => 0,
 					'trace' => $trace,
 					'exceptions' => true,
 					'location' => $gwendpoint,
-					'stream_context' => $stream_context));
+					'local_cert' => $this->localCert));
 			} else {
 				$this->logger->debug("Using existing SoapClient");
 				// for mocking purpose (only)
