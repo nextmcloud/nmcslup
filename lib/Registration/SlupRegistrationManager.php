@@ -16,7 +16,9 @@ use SoapClient;
  * ```
  * sudo -u www-data php /var/www/nextcloud/occ config:app:set nmcslup slupid --value <value handed over by slup team>
  * sudo -u www-data php /var/www/nextcloud/occ config:app:set nmcslup slupsecret --value <value handed over by slup team>
- * sudo -u www-data php /var/www/nextcloud/occ config:app:set nmcslup slupgwendpoint --value value handed over by slup team>
+ * sudo -u www-data php /var/www/nextcloud/occ config:app:set nmcslup slupgwendpoint --value <value handed over by slup team>
+ * sudo -u www-data php /var/www/nextcloud/occ config:app:set nmcslup slupreceiverurl --value <value handed over by slup team>
+ * sudo -u www-data php /var/www/nextcloud/occ config:app:set nmcslup local_cert --value <value handed over by slup team>
  * ```
  */
 class SlupRegistrationManager {
@@ -81,7 +83,7 @@ class SlupRegistrationManager {
 		$this->config = $config;
 
 		$this->wsdlPath = dirname(__FILE__) . "/slupService.wsdl";
-		$this->localCert = $this->config->getAppValue('nmcslup', 'local_cert', dirname(__FILE__) . '/cert.pem');
+		$this->localCert = $this->config->getAppValue('nmcslup', 'local_cert', dirname(__FILE__) . '/certkey.pem');
 
 		// in a scaled cluster, it is not a good idea to depend on
 		// a shutdown procedure as you have to find out when last cluster
@@ -350,7 +352,8 @@ class SlupRegistrationManager {
 	 * Method is public for unittest purposes.
 	 */
 	public function sendRegistration($gwendpoint, $appid, $appsec, $trace = false) {
-		$receiverEndpoint = $this->urlGenerator->linkToRouteAbsolute(Application::APP_ID . '.SlupApi.soapCall');
+		$receiverEndpoint = $this->config->getAppValue('nmcslup', 'slupreceiverurl', 'https://slup.dev3.next.magentacloud.de/index.php/apps/nmcslup/api/1.0/slup');
+
 		$this->logger->debug($appid . ": Register at " . $gwendpoint . " -cb-> " . $receiverEndpoint);
 
 		try {
@@ -367,6 +370,7 @@ class SlupRegistrationManager {
 					'trace' => $trace,
 					'exceptions' => true,
 					'location' => $gwendpoint,
+					'local_cert' => $this->localCert));
 					'local_cert' => $this->localCert));
 			} else {
 				$this->logger->debug("Using existing SoapClient");
@@ -394,6 +398,9 @@ class SlupRegistrationManager {
 			// Set headers for soapclient object
 			$soapClient->__setSoapHeaders(array($objSoapVarWSSEHeader));
 			// Call startSLUP2
+
+			$this->logger->debug("SLUP REQUEST HEADERS:\n" . $soapClient->__getLastRequestHeaders() . "\n");
+
 			$response = $soapClient->startSLUP2(array('slupURL' => $receiverEndpoint));
 			if (is_null($response)) {
 				throw new Exception("Unknown SLUP NULL response, undefined state");
