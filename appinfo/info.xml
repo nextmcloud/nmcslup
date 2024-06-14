@@ -5,7 +5,7 @@
 	<name>NextMagentaCloud SLave UPdate</name>
 	<summary>NextMagentaCloud SLUP integration</summary>
 	<description>NextMagentaCloud Telekom customer change event integration (SLUP=SLave UPdate)</description>
-	<version>1.0.0-nmc</version>
+	<version>1.1.0</version>
 	<licence>agpl</licence>
 	<author>Bernd Rederlechner</author>
 	<namespace>NextMagentaCloudSlup</namespace>
