@@ -352,7 +352,7 @@ class SlupRegistrationManager {
 	 * Method is public for unittest purposes.
 	 */
 	public function sendRegistration($gwendpoint, $appid, $appsec, $trace = false) {
-		$receiverEndpoint = $this->config->getAppValue('nmcslup', 'slupreceiverurl', 'https://slup.dev3.next.magentacloud.de/index.php/apps/nmcslup/api/1.0/slup');
+		$receiverEndpoint = $this->config->getAppValue('nmcslup', 'slupreceiverurl', 'https://magentacloud.de/index.php/apps/nmcslup/api/1.0/slup');
 
 		$this->logger->debug($appid . ": Register at " . $gwendpoint . " -cb-> " . $receiverEndpoint);
 
@@ -370,7 +370,6 @@ class SlupRegistrationManager {
 					'trace' => $trace,
 					'exceptions' => true,
 					'location' => $gwendpoint,
-					'local_cert' => $this->localCert));
 					'local_cert' => $this->localCert));
 			} else {
 				$this->logger->debug("Using existing SoapClient");
