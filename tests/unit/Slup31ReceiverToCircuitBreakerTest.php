@@ -10,16 +10,12 @@ use OCA\NextMagentaCloudSlup\AppInfo\Application;
 use OCA\NextMagentaCloudSlup\Controller\SlupApiController;
 use OCA\NextMagentaCloudSlup\Registration\SlupRegistrationManager;
 use OCA\NextMagentaCloudSlup\TestHelper\SoapTestCase;
-
-
 use OCP\Http\Client\IClientService;
 use OCP\ICacheFactory;
 use OCP\IConfig;
-
-use OCP\ILogger;
-
 use OCP\IRequest;
 use OCP\IURLGenerator;
+use Psr\Log\LoggerInterface;
 
 class Slup31ReceiverToCircuitBreakerTest extends SoapTestCase {
 
@@ -40,7 +36,7 @@ class Slup31ReceiverToCircuitBreakerTest extends SoapTestCase {
 		$this->urlGenerator = $app->getContainer()->get(IURLGenerator::class);
 		$this->registrationManager = $this->getMockBuilder(SlupRegistrationManager::class)
 										->onlyMethods(['sendRegistration'])
-										->setConstructorArgs([ $app->getContainer()->get(ILogger::class),
+										->setConstructorArgs([ $app->getContainer()->get(LoggerInterface::class),
 											$this->urlGenerator,
 											$app->getContainer()->get(IClientService::class),
 											$this->config,
@@ -52,7 +48,7 @@ class Slup31ReceiverToCircuitBreakerTest extends SoapTestCase {
 		$this->accountRulesMock = $this->createMock(UserAccountRules::class);
 		$this->slupController = new SlupApiController(Application::APP_ID,
 			$app->getContainer()->get(IRequest::class),
-			$app->getContainer()->get(ILogger::class),
+			$app->getContainer()->get(LoggerInterface::class),
 			$this->registrationManager,
 			$app->getContainer()->get(TariffRules::class),
 			$this->accountRulesMock);

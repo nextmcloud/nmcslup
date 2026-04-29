@@ -7,14 +7,12 @@ namespace OCA\NextMagentaCloudSlup\AppInfo;
 use OCP\App\IAppManager;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
-
 use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
-use OCP\ILogger;
+use Psr\Log\LoggerInterface;
 
 class Application extends App implements IBootstrap {
 	public const APP_ID = 'nmcslup';
-
 
 	public function __construct() {
 		parent::__construct(self::APP_ID);
@@ -22,7 +20,7 @@ class Application extends App implements IBootstrap {
 
 	public function register(IRegistrationContext $context): void {
 		// Register the composer autoloader for packages shipped by this app, if applicable
-		//include_once __DIR__ . '/../../vendor/autoload.php';
+		// include_once __DIR__ . '/../../vendor/autoload.php';
 	}
 
 	/**
@@ -31,9 +29,10 @@ class Application extends App implements IBootstrap {
 	 */
 	public function boot(IBootContext $context): void {
 		$appMgr = $this->getContainer()->get(IAppManager::class);
-		$logger = $this->getContainer()->get(ILogger::class);
+		$logger = $this->getContainer()->get(LoggerInterface::class);
+
 		if (!$appMgr->isInstalled('nmcprovisioning')) {
-			$logger->error("NmcProvisioning app not installed or enabled, but NmcSlup depends on it!");
+			$logger->error('NmcProvisioning app not installed or enabled, but NmcSlup depends on it!');
 		}
 
 		// TODO: may check also for minimal version of dependent app

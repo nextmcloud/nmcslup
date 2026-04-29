@@ -9,11 +9,9 @@ use OCA\NextMagentaCloudSlup\Registration\SlupConnectException;
 use OCA\NextMagentaCloudSlup\Registration\SlupRegistrationManager;
 use OCP\Http\Client\IClientService;
 use OCP\ICacheFactory;
-
 use OCP\IConfig;
-
-use OCP\ILogger;
 use OCP\IURLGenerator;
+use Psr\Log\LoggerInterface;
 use PHPUnit\Framework\TestCase;
 
 class SlupSendRegistrationTest extends TestCase {
@@ -29,7 +27,7 @@ class SlupSendRegistrationTest extends TestCase {
 		$app = new \OCP\AppFramework\App(Application::APP_ID);
 		$this->config = $app->getContainer()->get(IConfig::class);
 		$this->urlGenerator = $app->getContainer()->get(IURLGenerator::class);
-		$this->registrationManager = new SlupRegistrationManager($app->getContainer()->get(ILogger::class),
+		$this->registrationManager = new SlupRegistrationManager($app->getContainer()->get(LoggerInterface::class),
 			$this->urlGenerator,
 			$app->getContainer()->get(IClientService::class),
 			$this->config,
@@ -37,7 +35,7 @@ class SlupSendRegistrationTest extends TestCase {
 		$this->soapClientMock = $this->getMockFromWsdl($this->registrationManager->getWsdlPath());
 		$this->registrationManager->replaceSoapClient($this->soapClientMock);
 
-		$this->realConnectManager = new SlupRegistrationManager($app->getContainer()->get(ILogger::class),
+		$this->realConnectManager = new SlupRegistrationManager($app->getContainer()->get(LoggerInterface::class),
 			$this->urlGenerator,
 			$app->getContainer()->get(IClientService::class),
 			$this->config,

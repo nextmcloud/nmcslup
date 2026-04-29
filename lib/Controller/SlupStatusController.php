@@ -24,15 +24,13 @@ namespace OCA\NextMagentaCloudSlup\Controller;
 
 use OCA\NextMagentaCloudSlup\Registration\SlupRegistrationManager;
 use OCP\AppFramework\ApiController;
-
 use OCP\AppFramework\Http\DataResponse;
-use OCP\ILogger;
-
 use OCP\IRequest;
+use Psr\Log\LoggerInterface;
 
 class SlupStatusController extends ApiController {
 
-	/** @var ILogger */
+	/** @var LoggerInterface */
 	protected $logger;
 
 	/** @var SlupRegistrationManager */
@@ -55,7 +53,7 @@ class SlupStatusController extends ApiController {
 	 */
 	public function __construct($appName,
 		IRequest $request,
-		ILogger $logger,
+		LoggerInterface $logger,
 		SlupRegistrationManager $slupRegistrationMgr,
 		$corsMethods = 'POST',
 		$corsAllowedHeaders = 'Authorization, Content-Type, Accept',

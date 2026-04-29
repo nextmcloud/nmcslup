@@ -29,9 +29,8 @@ namespace OCA\NextMagentaCloudSlup\Controller;
 
 use OCP\AppFramework\ApiController;
 use OCP\AppFramework\Http\Response;
-
-use OCP\ILogger;
 use OCP\IRequest;
+use Psr\Log\LoggerInterface;
 
 /**
  * Base class to inherit a Soap API handling controller from
@@ -39,7 +38,7 @@ use OCP\IRequest;
  */
 abstract class SoapApiController extends ApiController {
 
-	/** @var ILogger */
+	/** @var LoggerInterface */
 	protected $logger;
 
 	/**
@@ -64,7 +63,7 @@ abstract class SoapApiController extends ApiController {
 	public function __construct($appName,
 		IRequest $request,
 		string $wsdlPath,
-		ILogger $logger,
+		LoggerInterface $logger,
 		$corsMethods = 'POST',
 		$corsAllowedHeaders = 'Authorization, Content-Type, Accept',
 		$corsMaxAge = 1728000) {
