@@ -8,8 +8,8 @@ use OCA\NextMagentaCloudSlup\AppInfo\Application;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\IAppContainer;
-use Psr\Log\LoggerInterface;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 class NmcProvisioningDependencyTest extends TestCase {
 	public function setUp(): void {

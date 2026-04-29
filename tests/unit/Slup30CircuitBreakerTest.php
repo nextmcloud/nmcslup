@@ -12,8 +12,8 @@ use OCP\Http\Client\IClientService;
 use OCP\ICacheFactory;
 use OCP\IConfig;
 use OCP\IURLGenerator;
-use Psr\Log\LoggerInterface;
 use PHPUnit\Framework\Assert;
+use Psr\Log\LoggerInterface;
 
 class Slup30CircuitBreakerTest extends SoapTestCase {
 

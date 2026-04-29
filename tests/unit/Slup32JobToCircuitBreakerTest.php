@@ -17,9 +17,9 @@ use OCP\ICacheFactory;
 use OCP\IConfig;
 use OCP\IRequest;
 use OCP\IURLGenerator;
-use Psr\Log\LoggerInterface;
-
 use PHPUnit\Framework\Assert;
+
+use Psr\Log\LoggerInterface;
 
 class Slup32JobToCircuitBreakerTest extends SoapTestCase {
 
