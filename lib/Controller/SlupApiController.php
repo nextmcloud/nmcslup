@@ -30,15 +30,13 @@ use OCA\NextMagentaCloudSlup\Registration\SlupRegistrationManager;
 use OCA\NextMagentaCloudSlup\Service\ForbiddenException;
 use OCA\NextMagentaCloudSlup\Service\NotFoundException;
 use OCA\NextMagentaCloudSlup\User\UserExistException;
-
-use OCP\ILogger;
 use OCP\IRequest;
+use Psr\Log\LoggerInterface;
 
 class SlupApiController extends SoapApiController {
 	public const PROVIDER_PREFIX = 'Telekom';
 
-
-	/** ILogger already comes from parent class */
+	/** LoggerInterface already comes from parent class */
 
 	/** @var SlupRegistrationManager */
 	private $slupRegistrationMgr;
@@ -68,7 +66,7 @@ class SlupApiController extends SoapApiController {
 	 */
 	public function __construct($appName,
 		IRequest $request,
-		ILogger $logger,
+		LoggerInterface $logger,
 		SlupRegistrationManager $slupRegistrationMgr,
 		TariffRules $tariffRules,
 		DisplaynameRules $displaynameRules,
@@ -206,7 +204,7 @@ class SlupApiController extends SoapApiController {
 		} catch (\InvalidArgumentException | ForbiddenException | NotFoundException | UserExistException | \Exception $e) {
 			$this->logger->logException($e, [
 				'message' => "SLUP processing error: {$e->getMessage()}): "  . PHP_EOL .  json_encode($request),
-				'level' => ILogger::ERROR,
+				'level' => LoggerInterface::ERROR,
 				'app' => 'nmcslup'
 			]);
 		}

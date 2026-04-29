@@ -11,18 +11,15 @@ use OCA\NextMagentaCloudSlup\Controller\SlupApiController;
 use OCA\NextMagentaCloudSlup\Registration\SlupCircuitControlJob;
 use OCA\NextMagentaCloudSlup\Registration\SlupRegistrationManager;
 use OCA\NextMagentaCloudSlup\TestHelper\SoapTestCase;
-
 use OCP\AppFramework\Utility\ITimeFactory;
-
 use OCP\Http\Client\IClientService;
 use OCP\ICacheFactory;
 use OCP\IConfig;
-use OCP\ILogger;
-
 use OCP\IRequest;
 use OCP\IURLGenerator;
-
 use PHPUnit\Framework\Assert;
+
+use Psr\Log\LoggerInterface;
 
 class Slup32JobToCircuitBreakerTest extends SoapTestCase {
 
@@ -39,7 +36,7 @@ class Slup32JobToCircuitBreakerTest extends SoapTestCase {
 		$this->urlGenerator = $app->getContainer()->get(IURLGenerator::class);
 		$this->registrationManager = $this->getMockBuilder(SlupRegistrationManager::class)
 										->onlyMethods(['sendRegistration'])
-										->setConstructorArgs([ $app->getContainer()->get(ILogger::class),
+										->setConstructorArgs([ $app->getContainer()->get(LoggerInterface::class),
 											$this->urlGenerator,
 											$app->getContainer()->get(IClientService::class),
 											$this->config,
@@ -51,7 +48,7 @@ class Slup32JobToCircuitBreakerTest extends SoapTestCase {
 		$this->accountRulesMock = $this->createMock(UserAccountRules::class);
 		$this->slupController = new SlupApiController(Application::APP_ID,
 			$app->getContainer()->get(IRequest::class),
-			$app->getContainer()->get(ILogger::class),
+			$app->getContainer()->get(LoggerInterface::class),
 			$this->registrationManager,
 			$app->getContainer()->get(TariffRules::class),
 			$this->accountRulesMock);
@@ -68,7 +65,7 @@ class Slup32JobToCircuitBreakerTest extends SoapTestCase {
 	public function testBootJobConstructor() {
 		$timeFactory = $this->app->getContainer()->get(ITimeFactory::class);
 		$this->assertNotNull($timeFactory);
-		$logger = $this->app->getContainer()->get(ILogger::class);
+		$logger = $this->app->getContainer()->get(LoggerInterface::class);
 		$this->assertNotNull($logger);
 		$config = $this->app->getContainer()->get(IConfig::class);
 		$this->assertNotNull($config);
@@ -102,7 +99,7 @@ class Slup32JobToCircuitBreakerTest extends SoapTestCase {
 
 		$timeFactory = $this->app->getContainer()->get(ITimeFactory::class);
 		$this->assertNotNull($timeFactory);
-		$logger = $this->app->getContainer()->get(ILogger::class);
+		$logger = $this->app->getContainer()->get(LoggerInterface::class);
 		$this->assertNotNull($logger);
 		$job = new SlupCircuitControlJob($timeFactory, $logger, $this->registrationManager);
 		$this->assertNotNull($job);
@@ -170,7 +167,7 @@ class Slup32JobToCircuitBreakerTest extends SoapTestCase {
 					->willReturn('https://slup2soap00.idm.ver.sul.t-online.de/slupService/');
 		$timeFactory = $this->app->getContainer()->get(ITimeFactory::class);
 		$this->assertNotNull($timeFactory);
-		$logger = $this->app->getContainer()->get(ILogger::class);
+		$logger = $this->app->getContainer()->get(LoggerInterface::class);
 		$this->assertNotNull($logger);
 		$this->registrationManager->expects($this->once())
 								->method('sendRegistration')
@@ -205,7 +202,7 @@ class Slup32JobToCircuitBreakerTest extends SoapTestCase {
 
 		$timeFactory = $this->app->getContainer()->get(ITimeFactory::class);
 		$this->assertNotNull($timeFactory);
-		$logger = $this->app->getContainer()->get(ILogger::class);
+		$logger = $this->app->getContainer()->get(LoggerInterface::class);
 		$this->assertNotNull($logger);
 		$this->registrationManager->expects($this->once())
 								->method('sendRegistration')
@@ -238,7 +235,7 @@ class Slup32JobToCircuitBreakerTest extends SoapTestCase {
 
 		$timeFactory = $this->app->getContainer()->get(ITimeFactory::class);
 		$this->assertNotNull($timeFactory);
-		$logger = $this->app->getContainer()->get(ILogger::class);
+		$logger = $this->app->getContainer()->get(LoggerInterface::class);
 		$this->assertNotNull($logger);
 		$this->registrationManager->expects($this->once())
 								->method('sendRegistration')

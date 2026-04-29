@@ -4,19 +4,18 @@ namespace OCA\NextMagentaCloudSlup\Registration;
 
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
-
-use OCP\ILogger;
+use Psr\Log\LoggerInterface;
 
 class SlupCircuitControlJob extends TimedJob {
 
-	/** @var ILogger */
+	/** @var LoggerInterface */
 	private $logger;
 
 	/** @var SlupRegistrationManager */
 	private $registrationManager;
 
 	public function __construct(ITimeFactory $time,
-		ILogger $logger,
+		LoggerInterface $logger,
 		SlupRegistrationManager $registrationManager) {
 		parent::__construct($time);
 		$this->logger = $logger;

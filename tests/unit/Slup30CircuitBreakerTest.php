@@ -9,14 +9,11 @@ use OCA\NextMagentaCloudSlup\Registration\SlupRegistrationManager;
 use OCA\NextMagentaCloudSlup\TestHelper\SoapTestCase;
 use OCP\AppFramework\App;
 use OCP\Http\Client\IClientService;
-
 use OCP\ICacheFactory;
-
 use OCP\IConfig;
-
-use OCP\ILogger;
 use OCP\IURLGenerator;
 use PHPUnit\Framework\Assert;
+use Psr\Log\LoggerInterface;
 
 class Slup30CircuitBreakerTest extends SoapTestCase {
 
@@ -37,7 +34,7 @@ class Slup30CircuitBreakerTest extends SoapTestCase {
 		$this->urlGenerator = $app->getContainer()->get(IURLGenerator::class);
 		$this->registrationManager = $this->getMockBuilder(SlupRegistrationManager::class)
 										->onlyMethods(['sendRegistration'])
-										->setConstructorArgs([ $app->getContainer()->get(ILogger::class),
+										->setConstructorArgs([ $app->getContainer()->get(LoggerInterface::class),
 											$this->urlGenerator,
 											$app->getContainer()->get(IClientService::class),
 											$this->config,

@@ -8,10 +8,8 @@ use OCA\NextMagentaCloudSlup\AppInfo\Application;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\IAppContainer;
-
-use OCP\ILogger;
-
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 class NmcProvisioningDependencyTest extends TestCase {
 	public function setUp(): void {
@@ -24,7 +22,7 @@ class NmcProvisioningDependencyTest extends TestCase {
 		$this->app = $this->getMockBuilder(Application::class)
 						->onlyMethods(['getContainer'])
 						->getMock();
-		$this->logger = $this->getMockForAbstractClass(ILogger::class);
+		$this->logger = $this->getMockForAbstractClass(LoggerInterface::class);
 		$containerMock = $this->createMock(IAppContainer::class);
 		$containerMock->expects($this->at(0))
 						->method('get')

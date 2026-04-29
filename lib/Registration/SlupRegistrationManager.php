@@ -6,9 +6,8 @@ use OCA\NextMagentaCloudSlup\AppInfo\Application;
 use OCP\Http\Client\IClientService;
 use OCP\ICacheFactory;
 use OCP\IConfig;
-use OCP\ILogger;
-
 use OCP\IURLGenerator;
+use Psr\Log\LoggerInterface;
 use SoapClient;
 
 /**
@@ -36,7 +35,7 @@ class SlupRegistrationManager {
 	public const CIRCUIT_HALFOPEN = 'halfopen';
 	public const CIRCUIT_CLOSED = 'closed';
 
-	/** @var ILogger */
+	/** @var LoggerInterface */
 	protected $logger;
 
 	/** @var IURLGenerator */
@@ -66,13 +65,13 @@ class SlupRegistrationManager {
 	private $controlIntervalSec; // time to next half-open try
 
 	/**
-	 * @param ILogger $logger
+	 * @param LoggerInterface $logger
 	 * @param IURLGenerator $urlGenerator
 	 * @param IClientService $clientService
 	 * @param IConfig $config
 	 * @param ICacheFactory $cachefactory
 	 */
-	public function __construct(ILogger $logger,
+	public function __construct(LoggerInterface $logger,
 		IURLGenerator $urlGenerator,
 		IClientService $clientService,
 		IConfig $config,
@@ -279,13 +278,12 @@ class SlupRegistrationManager {
 		$slupid = $this->config->getAppValue('nmcslup', 'slupid', "10TVL0SLUP0000004901NEXTMAGENTACLOUD0000");
 		$slupsecret = $this->config->getAppValue('nmcslup', 'slupsecret', "<no default secret>");
 		$slupGwEndpoint = $this->config->getAppValue('nmcslup', 'slupgwendpoint', 'https://slup2soap00.idm.ver.sul.t-online.de/slupService/');
-		$trace = ($this->config->getSystemValue('loglevel', ILogger::WARN) == ILogger::DEBUG);
 
 		try {
 			// in case of short hick ups, try a onetime single retry
 			// to not delay next retry too much
 			// by going into open state
-			$token = $this->sendRegistration($slupGwEndpoint, $slupid, $slupsecret, $trace);
+			$token = $this->sendRegistration($slupGwEndpoint, $slupid, $slupsecret);
 			$this->setToken($token);
 			return true;
 		} catch (\SoapFault $sf) {
@@ -422,9 +420,9 @@ class SlupRegistrationManager {
 			// and handled as "good" state; so this special sitation
 			// is only logged in debug mode
 			if ($slupDetailCode == 'A007') {
-				$level = ILogger::DEBUG;
+				$level = 0;
 			} else {
-				$level = ILogger::ERROR;
+				$level = 3;
 			}
 			if (!$soapClient) {
 				$this->logger->debug($fault->getMessage());
@@ -446,7 +444,7 @@ class SlupRegistrationManager {
 		} catch (\Throwable $e) {
 			$this->logger->logException($e, [
 				'message' => "Error code: {$e->getCode()}, message: {$e->getMessage()})",
-				'level' => ILogger::ERROR,
+				'level' => 3,
 				'app' => Application::APP_ID]);
 			throw $e;
 		}

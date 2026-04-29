@@ -5,21 +5,16 @@ declare(strict_types=1);
 namespace OCA\NextMagentaCloudSlup\UnitTest;
 
 use OCA\NextMagentaCloudProvisioning\Rules\TariffRules;
-
 use OCA\NextMagentaCloudProvisioning\Rules\UserAccountRules;
-
 use OCA\NextMagentaCloudProvisioning\User\NmcUserService;
 use OCA\NextMagentaCloudSlup\AppInfo\Application;
 use OCA\NextMagentaCloudSlup\Controller\SlupApiController;
-
 use OCA\NextMagentaCloudSlup\Registration\SlupRegistrationManager;
 use OCA\NextMagentaCloudSlup\TestHelper\SoapTestCase;
 use OCA\UserOIDC\Db\User;
-
 use OCP\IConfig;
-
-use OCP\ILogger;
 use OCP\IRequest;
+use Psr\Log\LoggerInterface;
 
 /**
  * This test must be run with --stderr, e.g.
@@ -49,11 +44,11 @@ class Slup10ReceiverTest extends SoapTestCase {
 		$this->config = $this->getMockForAbstractClass(IConfig::class);
 		$app = new \OCP\AppFramework\App(Application::APP_ID);
 		$this->accountRules = new UserAccountRules($this->config,
-			$app->getContainer()->get(ILogger::class),
+			$app->getContainer()->get(LoggerInterface::class),
 			$this->userServiceMock);
 		$this->slupController = new SlupApiController(Application::APP_ID,
 			$app->getContainer()->get(IRequest::class),
-			$app->getContainer()->get(ILogger::class),
+			$app->getContainer()->get(LoggerInterface::class),
 			$this->registrationManagerMock,
 			$app->getContainer()->get(TariffRules::class),
 			$this->accountRules);
