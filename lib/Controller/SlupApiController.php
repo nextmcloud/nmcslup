@@ -145,23 +145,35 @@ class SlupApiController extends SoapApiController {
 
 		$newFieldsClaims = $this->getUserDetails($request, "newfields");
 		$oldFieldsClaims = $this->getUserDetails($request, "oldfields");
+		
+		$accountClaims = clone $newFieldsClaims;
+		
+		if (property_exists($request, 'changeTime')) {
+		    $changeTime = trim((string)$request->changeTime);
+		
+		    if ($changeTime !== '') {
+		        $accountClaims->changeTime = $changeTime;
+		    }
+		}
+		
 		$userName = $this->getUserName($newFieldsClaims, $oldFieldsClaims);
 		$displayName = $this->getDisplayName($newFieldsClaims, $oldFieldsClaims);
 		$email = $this->getEmail($newFieldsClaims, $oldFieldsClaims);
 		$altEmail = $this->getAltEmail($newFieldsClaims, $oldFieldsClaims);
 		$quota = $this->getQuota($newFieldsClaims);
-
+		
 		try {
-			$this->logger->info("User account modification start");
-			$evalResult = $this->accountRules->deriveAccountState(
-				$userName,
-				$displayName,
-				$email,
-				$quota,
-				$newFieldsClaims,
-				false,
-				self::PROVIDER_PREFIX
-			);
+		    $this->logger->info("User account modification start");
+		
+		    $evalResult = $this->accountRules->deriveAccountState(
+		        $userName,
+		        $displayName,
+		        $email,
+		        $quota,
+		        $accountClaims,
+		        false,
+		        self::PROVIDER_PREFIX
+		    );
 
 			$this->logger->info(json_encode($evalResult));
 
