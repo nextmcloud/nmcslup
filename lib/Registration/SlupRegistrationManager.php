@@ -11,7 +11,7 @@ use Psr\Log\LoggerInterface;
 use SoapClient;
 
 /**
- * Please configure this app for SLUP connection endpoint with the following commands
+ * Configure the SLUP connection with:
  * ```
  * sudo -u www-data php /var/www/nextcloud/occ config:app:set nmcslup slupid --value <value handed over by slup team>
  * sudo -u www-data php /var/www/nextcloud/occ config:app:set nmcslup slupsecret --value <value handed over by slup team>
@@ -21,12 +21,10 @@ use SoapClient;
  * ```
  */
 class SlupRegistrationManager {
-	// persist at most 5 days in cache
-	// usually, SLUP does a disconnect every day which refreshes cache
-	// worst case, we force a reconnect after 5 days with empty token
+	// Keep the SLUP token for at most five days. Normally SLUP disconnects daily and refreshes it.
 	public const CACHE_MAX_TIME = 5 * 24 * 3600;
 
-	// sec between HALFOPEN trials, minimum is 300sec
+	// Minimum delay between HALFOPEN reconnect attempts is five minutes.
 	public const CIRCUIT_HALFOPEN_DELAY = 300;
 	public const CIRCUIT_STATE_MULTIPLIER = 12;
 
@@ -50,63 +48,49 @@ class SlupRegistrationManager {
 	/** @var ICacheFactory */
 	protected $cacheFactory;
 
-	/** local location of wsdl file */
+	/** Local path to the SLUP WSDL file. */
 	protected $wsdlPath;
 
-	/** local path to a client certificate for use with HTTPS authentication. It must be a PEM encoded file which contains your certificate and private key. */
+	/** PEM file containing the HTTPS client certificate and private key. */
 	protected $localCert;
 
 	/** @var bool */
 	protected $forceDisconnect = false;
 
+	/** Distributed cache used for token and circuit state. */
 	protected $cache;
 
-	/** @val int */
-	private $controlIntervalSec; // time to next half-open try
+	/** SOAP client. Replaceable for unit tests. */
+	protected $soapClient;
 
-	/**
-	 * @param LoggerInterface $logger
-	 * @param IURLGenerator $urlGenerator
-	 * @param IClientService $clientService
-	 * @param IConfig $config
-	 * @param ICacheFactory $cachefactory
-	 */
-	public function __construct(LoggerInterface $logger,
-		IURLGenerator $urlGenerator,
-		IClientService $clientService,
-		IConfig $config,
-		ICacheFactory $cacheFactory) {
+	/** Seconds until the next HALFOPEN attempt. */
+	private $controlIntervalSec;
+
+	public function __construct(LoggerInterface $logger, IURLGenerator $urlGenerator, IClientService $clientService, IConfig $config, ICacheFactory $cacheFactory) {
 		$this->logger = $logger;
 		$this->urlGenerator = $urlGenerator;
 		$this->clientService = $clientService;
 		$this->config = $config;
-
 		$this->wsdlPath = dirname(__FILE__) . "/slupService.wsdl";
 		$this->localCert = $this->config->getAppValue('nmcslup', 'local_cert', dirname(__FILE__) . '/certkey.pem');
 
-		// in a scaled cluster, it is not a good idea to depend on
-		// a shutdown procedure as you have to find out when last cluster
-		// node goes down. It is easier to work with TTL and let
-		// the cache cleanup itself after a time.
+		// Use a distributed cache so circuit state and tokens are shared across cluster nodes.
+		// TTL handles cleanup without depending on node shutdown events.
 		$this->cache = $cacheFactory->createDistributed("nmcslup");
-
 		$this->soapClient = null;
-		// app configs only support string values
-		$controlIntervalSec = intval($this->config->getAppValue('nmcslup', 'slupcontrolintv',
-			strval(self::CIRCUIT_HALFOPEN_DELAY)));
+		$controlIntervalSec = intval($this->config->getAppValue('nmcslup', 'slupcontrolintv', strval(self::CIRCUIT_HALFOPEN_DELAY)));
 		$this->setControlInterval($controlIntervalSec);
 	}
 
-
 	// ----- public service methods ------
 
-	// ----- unittest support methods, do not use in production code -----
+	// ----- unit test support, do not use in production code -----
+
 	public function getWsdlPath() {
 		return \realpath($this->wsdlPath);
 	}
 
-	// this allows for a delayed replacement of the SoapClient with getWsdlPath
-	// in constructor for mocking
+	// Allows replacing the delayed SoapClient instance with a mock.
 	public function replaceSoapClient($soapClient) {
 		$this->soapClient = $soapClient;
 	}
@@ -118,8 +102,8 @@ class SlupRegistrationManager {
 	public function incrementRecvCount() {
 		$this->cache->inc("recvmsgcount");
 
-		//Invariant: Connection is only successful if the first message is received
-		if($this->isCircuitHalfOpen()) {
+		// A HALFOPEN connection is considered successful only after the first message arrives.
+		if ($this->isCircuitHalfOpen()) {
 			$this->circuitClosed();
 		}
 	}
@@ -128,13 +112,10 @@ class SlupRegistrationManager {
 		return $this->cache->get("recvmsgcount");
 	}
 
-
-
 	// ----- token handling -----
 
 	/**
-	 * forced reconnect behaves the same a lost token, so
-	 * this is only a coding alias for clearing the token
+	 * A forced reconnect is equivalent to losing the current token.
 	 */
 	public function forceReconnect() {
 		return $this->cache->remove('token');
@@ -143,13 +124,13 @@ class SlupRegistrationManager {
 	public function isValidToken(string $token) {
 		if ($this->cache->hasKey("token")) {
 			$lastGatewayToken = $this->cache->get('token');
-			return (!is_null($lastGatewayToken) && ($lastGatewayToken == $token));
-		} else {
-			return false;
+			return !is_null($lastGatewayToken) && $lastGatewayToken == $token;
 		}
+
+		return false;
 	}
 
-	public function hasToken() : bool {
+	public function hasToken(): bool {
 		return $this->cache->hasKey("token");
 	}
 
@@ -157,13 +138,12 @@ class SlupRegistrationManager {
 		$this->cache->set("token", $token, self::CACHE_MAX_TIME);
 	}
 
-
 	public function getToken() {
 		if ($this->cache->hasKey("token")) {
 			return $this->cache->get('token');
-		} else {
-			return null;
 		}
+
+		return null;
 	}
 
 	public function clearToken() {
@@ -172,81 +152,73 @@ class SlupRegistrationManager {
 
 	// ----- circuit breaker handling -----
 
-	/** set control interval to at least 5 min */
-	public function setControlInterval(int $controlIntervalSec) : void {
-		$this->controlIntervalSec = ($controlIntervalSec < 300) ? 300 : $controlIntervalSec;
+	/** Set the reconnect interval to at least five minutes. */
+	public function setControlInterval(int $controlIntervalSec): void {
+		$this->controlIntervalSec = $controlIntervalSec < 300 ? 300 : $controlIntervalSec;
 	}
 
-	public function getControlInterval() : int {
+	public function getControlInterval(): int {
 		return $this->controlIntervalSec;
 	}
 
-	/** This method is primarily for test purposes */
+	/** Primarily used by unit tests. */
 	public function forceCircuitUndefined() {
 		return $this->cache->remove('circuitstate');
 	}
 
-	public function isCircuitUndefined() : bool {
-		return (!$this->cache->hasKey("circuitstate"));
+	public function isCircuitUndefined(): bool {
+		return !$this->cache->hasKey("circuitstate");
 	}
 
-	public function isCircuitOpen() : bool {
+	public function isCircuitOpen(): bool {
 		$circuitState = $this->cache->get('circuitstate');
-		return (!is_null($circuitState) && ($circuitState == self::CIRCUIT_OPEN));
+		return !is_null($circuitState) && $circuitState == self::CIRCUIT_OPEN;
 	}
 
-	public function isCircuitHalfOpen() : bool {
+	public function isCircuitHalfOpen(): bool {
 		$circuitState = $this->cache->get('circuitstate');
-		return (!is_null($circuitState) && ($circuitState == self::CIRCUIT_HALFOPEN));
+		return !is_null($circuitState) && $circuitState == self::CIRCUIT_HALFOPEN;
 	}
 
-	public function isCircuitClosed() : bool {
+	public function isCircuitClosed(): bool {
 		$circuitState = $this->cache->get('circuitstate');
-		return (!is_null($circuitState) && ($circuitState == self::CIRCUIT_CLOSED));
+		return !is_null($circuitState) && $circuitState == self::CIRCUIT_CLOSED;
 	}
 
-	public function circuitState() : string {
+	public function circuitState(): string {
 		if ($this->isCircuitUndefined()) {
 			return self::CIRCUIT_UNDEFINED;
-		} else {
-			return $this->cache->get('circuitstate');
 		}
+
+		return $this->cache->get('circuitstate');
 	}
 
 	/**
-	 * While in open state, we let the partner system calm down
-	 * and plan a background job for the next half-open trial
-	 *
-	 * Note that the minimal granularity of NextCloud scheduler
-	 * is 5 min.
+	 * OPEN pauses normal connection attempts until the next HALFOPEN trial.
+	 * Nextcloud background jobs have a minimum scheduling interval of five minutes.
 	 */
 	public function circuitOpen($delay = null) {
-
-		// the delay parameter could be used to enlarge delay artificially from outside
-		// (not used yet)
+		// An external caller may increase the reconnect delay.
 		if (!is_null($delay)) {
 			$this->setControlInterval($delay);
 		}
 
 		if (!$this->isCircuitOpen()) {
-			// only set cache if clock is not ticking for an older open circuit
 			$this->logger->info("SLUP switched to OPEN");
 		}
-		// always refresh state on call
+
+		// Refresh the state TTL on every call.
 		$this->cache->set("circuitstate", self::CIRCUIT_OPEN, self::CIRCUIT_STATE_MULTIPLIER * $this->getControlInterval());
-		// TODO: signal state to monitoring
+		// TODO: expose circuit state to monitoring
 	}
 
 	/**
-	 * While in half-open state, system tries to reconnect
+	 * HALFOPEN performs a controlled reconnect attempt.
 	 */
 	public function circuitHalfOpen() {
-		// duration of HALF_OPEN state is potentially undefined
-		// but state is exited quickly, so TTL maximum should be ok
 		$this->logger->info("SLUP switched to HALFOPEN");
 		$this->cache->set("circuitstate", self::CIRCUIT_HALFOPEN, self::CIRCUIT_STATE_MULTIPLIER * $this->getControlInterval());
-		// we log start and scheduling differently, so no log
-		// TODO: signal state to monitoring
+		// TODO: expose circuit state to monitoring
 
 		if (!$this->registerSlup()) {
 			$this->circuitOpen();
@@ -254,24 +226,24 @@ class SlupRegistrationManager {
 	}
 
 	/**
-	 * System goes back to normal business
-	 * TODO: signal in monitoring
+	 * CLOSED means the SLUP connection is operating normally.
 	 */
 	public function circuitClosed() {
 		if (!$this->isCircuitClosed()) {
 			$this->logger->info("SLUP circuit CLOSED, normal business");
 		}
+
 		$this->cache->set("circuitstate", self::CIRCUIT_CLOSED, self::CIRCUIT_STATE_MULTIPLIER * $this->getControlInterval());
+		// TODO: expose circuit state to monitoring
 	}
 
-
 	/**
-	 * return null if connection is not established, otherwise current token.
+	 * Register with SLUP and store the returned token.
+	 * Returns true when connected or already registered.
 	 */
 	public function registerSlup($wait = 5) {
-		// only connect if not obviously already connected
+		// Do not reconnect while an active registration is already confirmed.
 		if ($this->isCircuitClosed()) {
-			// a successful registration is active already
 			return true;
 		}
 
@@ -280,32 +252,54 @@ class SlupRegistrationManager {
 		$slupGwEndpoint = $this->config->getAppValue('nmcslup', 'slupgwendpoint', 'https://slup2soap00.idm.ver.sul.t-online.de/slupService/');
 
 		try {
-			// in case of short hick ups, try a onetime single retry
-			// to not delay next retry too much
-			// by going into open state
+			// First registration attempt.
 			$token = $this->sendRegistration($slupGwEndpoint, $slupid, $slupsecret);
 			$this->setToken($token);
 			return true;
 		} catch (\SoapFault $sf) {
 			$slupDetailCode = $this->getSlupSoapFaultDetail($sf, 'code', 'none');
-			if ($slupDetailCode == 'A007') {
-				// go on, either with the current token or a forced reconnect
-				// on non-matching current token (=A007 at first connect after boot)
+			$slupDetailMessage = $this->getSlupSoapFaultDetail($sf, 'message', 'none');
+
+			// A007 means SLUP already has an active registration.
+			if ($slupDetailCode === 'A007') {
 				return true;
-			} elseif ($sf->faultcode == 'HTTP') {
-				$this->logger->warning("SLUP try1 http fault failure, direct retry");
-			} else {
-				$this->logger->error("SLUP try1 http fault, giving up");
+			}
+
+			// Retry transient HTTP SOAP faults once before opening the circuit.
+			if ((string)$sf->faultcode !== 'HTTP') {
+				$this->logger->error('SLUP try1 SOAP fault, giving up', [
+					'faultCode' => (string)$sf->faultcode,
+					'faultString' => (string)$sf->faultstring,
+					'slupDetailCode' => $slupDetailCode,
+					'slupDetailMessage' => $slupDetailMessage,
+					'app' => Application::APP_ID,
+				]);
 				$this->clearToken();
 				return false;
 			}
+
+			$this->logger->warning('SLUP try1 HTTP SOAP fault, retrying once', [
+				'faultCode' => (string)$sf->faultcode,
+				'faultString' => (string)$sf->faultstring,
+				'slupDetailCode' => $slupDetailCode,
+				'slupDetailMessage' => $slupDetailMessage,
+				'app' => Application::APP_ID,
+			]);
 		} catch (\Throwable $e) {
-			$this->logger->error("SLUP try1 critical fault, giving up");
+			$this->logger->error('SLUP try1 critical fault, giving up', [
+				'exceptionClass' => get_class($e),
+				'exceptionCode' => $e->getCode(),
+				'exceptionMessage' => $e->getMessage(),
+				'exceptionFile' => $e->getFile(),
+				'exceptionLine' => $e->getLine(),
+				'app' => Application::APP_ID,
+			]);
 			$this->clearToken();
 			return false;
 		}
 
-		sleep($wait); // short term retry after default 5sec
+		// Short delay before the single retry.
+		sleep($wait);
 
 		try {
 			$token = $this->sendRegistration($slupGwEndpoint, $slupid, $slupsecret);
@@ -313,17 +307,31 @@ class SlupRegistrationManager {
 			return true;
 		} catch (\SoapFault $sf) {
 			$slupDetailCode = $this->getSlupSoapFaultDetail($sf, 'code', 'none');
-			if ($slupDetailCode == 'A007') {
-				// go on, either with the current token or a forced reconnect
-				// on non-matching current token (=A007 at first connect after boot)
+			$slupDetailMessage = $this->getSlupSoapFaultDetail($sf, 'message', 'none');
+
+			// A007 is also successful on the retry.
+			if ($slupDetailCode === 'A007') {
 				return true;
-			} else {
-				$this->logger->error("SLUP try2 SOAP fault, giving up");
-				$this->clearToken();
-				return false;
 			}
+
+			$this->logger->error('SLUP try2 SOAP fault, giving up', [
+				'faultCode' => (string)$sf->faultcode,
+				'faultString' => (string)$sf->faultstring,
+				'slupDetailCode' => $slupDetailCode,
+				'slupDetailMessage' => $slupDetailMessage,
+				'app' => Application::APP_ID,
+			]);
+			$this->clearToken();
+			return false;
 		} catch (\Throwable $e) {
-			$this->logger->error("SLUP try2 failed again, giving up");
+			$this->logger->error('SLUP try2 critical fault, giving up', [
+				'exceptionClass' => get_class($e),
+				'exceptionCode' => $e->getCode(),
+				'exceptionMessage' => $e->getMessage(),
+				'exceptionFile' => $e->getFile(),
+				'exceptionLine' => $e->getLine(),
+				'app' => Application::APP_ID,
+			]);
 			$this->clearToken();
 			return false;
 		}
@@ -332,120 +340,136 @@ class SlupRegistrationManager {
 	// ----- implementation details ------
 
 	/**
-	 * Stable SLUP fault detail extraction
-	 * Public for unittest support
+	 * Safely read a value from the optional SLUP SOAP fault detail.
+	 * Some SOAP faults contain no detail object at all.
 	 */
-	public function getSlupSoapFaultDetail(\SoapFault $fault, String $name, string $default = '') {
-		if (property_exists($fault, 'detail') &&
-			 property_exists($fault->detail, 'FaultResponse') &&
-			 property_exists($fault->detail->FaultResponse, $name)) {
-			return $fault->detail->FaultResponse->{$name};
-		} else {
+	public function getSlupSoapFaultDetail(\SoapFault $fault, string $name, string $default = ''): string {
+		if (!property_exists($fault, 'detail') || !is_object($fault->detail)) {
 			return $default;
 		}
+
+		if (!property_exists($fault->detail, 'FaultResponse') || !is_object($fault->detail->FaultResponse)) {
+			return $default;
+		}
+
+		if (!property_exists($fault->detail->FaultResponse, $name)) {
+			return $default;
+		}
+
+		return (string)$fault->detail->FaultResponse->{$name};
 	}
 
 	/**
-	 *
-	 * Method is public for unittest purposes.
+	 * Register the callback URL with the SLUP SOAP gateway.
+	 * Public to allow direct unit testing.
 	 */
 	public function sendRegistration($gwendpoint, $appid, $appsec, $trace = false) {
 		$receiverEndpoint = $this->config->getAppValue('nmcslup', 'slupreceiverurl', 'https://magentacloud.de/index.php/apps/nmcslup/api/1.0/slup');
+		$soapClient = null;
 
 		$this->logger->debug($appid . ": Register at " . $gwendpoint . " -cb-> " . $receiverEndpoint);
 
 		try {
 			$this->logger->debug("SLUP try to connect");
+
 			if (is_null($this->soapClient)) {
 				$this->logger->debug("Creating new SoapClient");
-				// late client creation or mocking to access settings before creation properly
+
+				// Create the SOAP client lazily so tests can replace it with a mock.
 				libxml_set_external_entity_loader(static function ($public, $system, $context) {
 					return $system;
 				});
 
-				$soapClient = new SoapClient($this->wsdlPath, array('connection_timeout' => 20, // limit response time to 20sec
+				$soapClient = new SoapClient($this->wsdlPath, [
+					'connection_timeout' => 20,
 					'cache_wsdl' => 0,
 					'trace' => $trace,
 					'exceptions' => true,
 					'location' => $gwendpoint,
-					'local_cert' => $this->localCert));
+					'local_cert' => $this->localCert,
+				]);
 			} else {
 				$this->logger->debug("Using existing SoapClient");
-				// for mocking purpose (only)
 				$soapClient = $this->soapClient;
 			}
 
-			//security name-space
+			// WS-Security UsernameToken namespace.
 			$strWSSENS = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd";
-			// Create SOAP Vars
+
+			// Build the WS-Security UsernameToken from SLUP ID and secret.
 			$objSoapVarUser = new \SoapVar($appid, XSD_STRING, null, $strWSSENS, null, $strWSSENS);
 			$objSoapVarPass = new \SoapVar($appsec, XSD_STRING, null, $strWSSENS, null, $strWSSENS);
-			// Create Object for Auth Class and pass in soap var
 			$objWSSEAuth = new SoapWSSEAuth($objSoapVarUser, $objSoapVarPass);
-			// Create SoapVar out of object of Auth class
 			$objSoapVarWSSEAuth = new \SoapVar($objWSSEAuth, SOAP_ENC_OBJECT, null, $strWSSENS, 'UsernameToken', $strWSSENS);
-			// Create object for Token Class
 			$objWSSEToken = new SoapWSSEToken($objSoapVarWSSEAuth);
-			// Create SoapVar out of object of Token class
 			$objSoapVarWSSEToken = new \SoapVar($objWSSEToken, SOAP_ENC_OBJECT, null, $strWSSENS, 'UsernameToken', $strWSSENS);
-			// Create SoapVar for 'Security' node
 			$objSoapVarHeaderVal = new \SoapVar($objSoapVarWSSEToken, SOAP_ENC_OBJECT, null, $strWSSENS, 'Security', $strWSSENS);
-			// Create header object out of security soapvar, third parameter here makes 'mustUnderstand=1'
+
+			// mustUnderstand=true requires the gateway to process the security header.
 			$objSoapVarWSSEHeader = new \SoapHeader($strWSSENS, 'Security', $objSoapVarHeaderVal, true);
-			// Set headers for soapclient object
-			$soapClient->__setSoapHeaders(array($objSoapVarWSSEHeader));
-			// Call startSLUP2
+			$soapClient->__setSoapHeaders([$objSoapVarWSSEHeader]);
 
-			$this->logger->debug("SLUP REQUEST HEADERS:\n" . $soapClient->__getLastRequestHeaders() . "\n");
+			// Register our callback URL and receive the current SLUP token.
+			$response = $soapClient->startSLUP2(['slupURL' => $receiverEndpoint]);
 
-			$response = $soapClient->startSLUP2(array('slupURL' => $receiverEndpoint));
 			if (is_null($response)) {
-				throw new Exception("Unknown SLUP NULL response, undefined state");
+				throw new \Exception("Unknown SLUP NULL response, undefined state");
 			}
 
-			$this->logger->debug("startSLUP2: " . $soapClient->__getLastResponse());
 			if ($response->SLUPreturncode == '0000') {
-				// these are the cases when we ar connected
+				$this->logger->debug("SLUP registration succeeded");
 				return $response->token;
-			} else {
-				$this->logger->critical("Response: " . strval($soapClient->__getLastResponse()) . PHP_EOL .
-										"SLUP-Connect code: {$response->SLUPreturncode}, message: {$response->detail}");
-				// give the caller the chance to handle the problem individually
-				throw new SlupConnectException("[{$response->SLUPreturncode}] {$response->detail}", \hexdec($response->SLUPreturncode));
 			}
+
+			$this->logger->error('SLUP registration rejected', [
+				'slupReturnCode' => (string)$response->SLUPreturncode,
+				'slupDetail' => (string)$response->detail,
+				'endpoint' => $gwendpoint,
+				'receiverEndpoint' => $receiverEndpoint,
+				'app' => Application::APP_ID,
+			]);
+
+			// Let the caller handle non-successful SLUP return codes.
+			throw new SlupConnectException("[{$response->SLUPreturncode}] {$response->detail}", \hexdec($response->SLUPreturncode));
 		} catch (\SoapFault $fault) {
 			$slupDetailCode = $this->getSlupSoapFaultDetail($fault, 'code', 'none');
 			$slupDetailMessage = $this->getSlupSoapFaultDetail($fault, 'message', 'none');
-			// A007 already connected is delivered as SOAPFault
-			// and handled as "good" state; so this special sitation
-			// is only logged in debug mode
-			if ($slupDetailCode == 'A007') {
-				$level = 0;
+
+			// Log structured fault data only. Never log the SOAP request because it contains credentials.
+			$context = [
+				'faultCode' => (string)$fault->faultcode,
+				'faultString' => (string)$fault->faultstring,
+				'slupDetailCode' => $slupDetailCode,
+				'slupDetailMessage' => $slupDetailMessage,
+				'endpoint' => $gwendpoint,
+				'receiverEndpoint' => $receiverEndpoint,
+				'app' => Application::APP_ID,
+			];
+
+			// A007 means "already connected" and is not an actual failure.
+			if ($slupDetailCode === 'A007') {
+				$this->logger->debug('SLUP SOAP fault: already connected', $context);
 			} else {
-				$level = 3;
+				$this->logger->error('SLUP SOAP fault', $context);
 			}
-			if (!$soapClient) {
-				$this->logger->debug($fault->getMessage());
-				$this->logger->logException($fault, [
-					'message' => "SOAPFault code: {$fault->faultcode}:{$slupDetailCode}" . PHP_EOL .
-						"SOAPFault message: {$fault->faultstring}:{$slupDetailMessage}",
-					'level' => $level,
-					'app' => Application::APP_ID]);
-			} else {
-				$this->logger->logException($fault, [
-					'message' => "Response: " . strval($soapClient?->__getLastResponse()) . PHP_EOL .
-						"SOAPFault code: {$fault->faultcode}:{$slupDetailCode}" . PHP_EOL .
-						"SOAPFault message: {$fault->faultstring}:{$slupDetailMessage}" . PHP_EOL .
-						"SOAP Fault request: " . $soapClient?->__getLastRequest() . PHP_EOL,
-					'level' => $level,
-					'app' => Application::APP_ID]);
-			}
+
 			throw $fault;
 		} catch (\Throwable $e) {
-			$this->logger->logException($e, [
-				'message' => "Error code: {$e->getCode()}, message: {$e->getMessage()})",
-				'level' => 3,
-				'app' => Application::APP_ID]);
+			// Include enough context to diagnose TLS, certificate and client-side failures.
+			$this->logger->error('SLUP client error', [
+				'exceptionClass' => get_class($e),
+				'exceptionCode' => $e->getCode(),
+				'exceptionMessage' => $e->getMessage(),
+				'exceptionFile' => $e->getFile(),
+				'exceptionLine' => $e->getLine(),
+				'endpoint' => $gwendpoint,
+				'receiverEndpoint' => $receiverEndpoint,
+				'localCert' => $this->localCert,
+				'localCertExists' => is_file($this->localCert),
+				'localCertReadable' => is_readable($this->localCert),
+				'app' => Application::APP_ID,
+			]);
+
 			throw $e;
 		}
 	}
