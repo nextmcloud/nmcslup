@@ -24,7 +24,7 @@ on:
         options: 
           - master
           - stable32
-          - nmc/slup-mtls
+          - stable33
       increment:
         description: 'Release increment'
         required: true
